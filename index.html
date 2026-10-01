@@ -2662,7 +2662,7 @@ function setupMenus() {
   on('bNotes', () => openSub('<h2>ЗАПИСКИ (' + SAVE.notes.length + '/8)</h2>' + NOTES.map((n, i) => SAVE.notes.includes(i) ? '<div class="end-item"><b>' + n.t + '</b><p>' + n.b + '</p><p style="text-align:right;font-style:italic">' + n.s + '</p></div>' : '<div class="end-item locked"><b>Записка #' + (i + 1) + ' — не найдена</b><span> (' + LEVELS[i >> 1].title + (i % 2 ? ', скрытая комната' : '') + ')</span></div>').join('')));
   on('bControls', () => openSub('<h2>УПРАВЛЕНИЕ</h2>' + controlsHTML()));
   const settings = () => {
-    openSub('<h2>НАСТРОЙКИ</h2><label class="set">Чувствительность мыши: <input type="range" id="sSens" min="0.3" max="2.5" step="0.1" value="' + SAVE.settings.sens + '"></label><label class="set">Громкость: <input type="range" id="sVol" min="0" max="1" step="0.05" value="' + SAVE.settings.vol + '"></label><label class="set">Качество графики: <select id="sQ"><option value="0">Низкое (быстро, для телефонов)</option><option value="1">Среднее</option><option value="2">Высокое</option><option value="3">Ультра (мощный ПК)</option></select></label><label class="set">Сложность: <select id="sD"><option value="easy">Лёгкая</option><option value="normal">Нормальная</option><option value="nightmare">Кошмар</option></select></label><label class="set">Голос (записки и рация): <select id="sV"><option value="1">Вкл (если есть русский голос)</option><option value="0">Только субтитры</option></select></label><label class="set">Сенсорное управление: <select id="sT"><option value="auto">Авто</option><option value="on">Включено</option><option value="off">Выключено</option></select></label><p style="color:#887">Если игра тормозит — выберите «Низкое».</p><button class="btn small" id="sReset" style="margin-top:10px">Сбросить весь прогресс</button>');
+    openSub('<h2>НАСТРОЙКИ</h2><label class="set">Чувствительность мыши: <input type="range" id="sSens" min="0.3" max="2.5" step="0.1" value="' + SAVE.settings.sens + '"></label><label class="set">Громкость: <input type="range" id="sVol" min="0" max="1" step="0.05" value="' + SAVE.settings.vol + '"></label><label class="set">Качество графики: <select id="sQ"><option value="0">Низкое (быстро, для телефонов)</option><option value="1">Среднее</option><option value="2">Высокое</option><option value="3">Ультра (мощный ПК)</option></select></label><label class="set">Сложность: <select id="sD"><option value="easy">Лёгкая</option><option value="normal">Нормальная</option><option value="nightmare">Кошмар</option><option value="cute">Для Сашечки 💕</option></select></label><label class="set">Голос (записки и рация): <select id="sV"><option value="1">Вкл (если есть русский голос)</option><option value="0">Только субтитры</option></select></label><label class="set">Сенсорное управление: <select id="sT"><option value="auto">Авто</option><option value="on">Включено</option><option value="off">Выключено</option></select></label><p style="color:#887">Если игра тормозит — выберите «Низкое».</p><button class="btn small" id="sReset" style="margin-top:10px">Сбросить весь прогресс</button>');
     $('sQ').value = SAVE.settings.quality; $('sT').value = SAVE.settings.touch || 'auto'; $('sD').value = SAVE.settings.diff || 'normal'; $('sV').value = SAVE.settings.voice === false ? '0' : '1';
     $('sD').onchange = (e) => { SAVE.settings.diff = e.target.value; saveGame(); refreshMenu(); }; $('sV').onchange = (e) => { SAVE.settings.voice = e.target.value === '1'; if (!SAVE.settings.voice) stopVoice(); saveGame(); };
     $('sT').onchange = (e) => { SAVE.settings.touch = e.target.value; saveGame(); applyTouchMode(detectTouch()); };
@@ -2825,6 +2825,7 @@ const DIFFS = {
   easy: { name: 'Лёгкая', spd: 0.8, dmg: 0.6, bat: 0.65, items: -1, extra: 2, dir: 1.3 },
   normal: { name: 'Нормальная', spd: 1, dmg: 1, bat: 1, items: 0, extra: 0, dir: 1 },
   nightmare: { name: 'Кошмар', spd: 1.2, dmg: 1.6, bat: 1.5, items: 1, extra: -2, dir: 0.7 },
+  cute: { name: 'Для Сашечки 💕', spd: 0.55, dmg: 0.3, bat: 0.4, items: -1, extra: 4, dir: 2.2, cute: true },
 };
 function diffCfg() { return DIFFS[SAVE.settings.diff] || DIFFS.normal; }
 function fmtTime(s) { s = Math.max(0, s); const m = Math.floor(s / 60), r = s - m * 60; return m + ':' + (r < 10 ? '0' : '') + r.toFixed(1); }
@@ -2870,7 +2871,7 @@ function loadCheckpoint() {
 function recKey(k) { return (SAVE.settings.diff || 'normal') + ':' + k; }
 function setRecord(k, t) { const key = recKey(k); const old = SAVE.records[key]; if (!old || t < old) { SAVE.records[key] = t; saveGame(); return !!old || true; } return false; }
 function recordsHTML() {
-  const ds = ['easy', 'normal', 'nightmare']; const cell = (d, k) => { const v = SAVE.records[d + ':' + k]; return '<td>' + (v ? fmtTime(v) : '—') + '</td>'; };
+  const ds = ['easy', 'normal', 'nightmare', 'cute']; const cell = (d, k) => { const v = SAVE.records[d + ':' + k]; return '<td>' + (v ? fmtTime(v) : '—') + '</td>'; };
   let h = '<h2>РЕКОРДЫ</h2><p>Лучшее время прохождения (таймер идёт только во время игры).</p><table><tr><td></td>' + ds.map((d) => '<td style="color:#ffd85a">' + DIFFS[d].name + '</td>').join('') + '</tr>';
   LEVELS.forEach((lv, i) => { h += '<tr><td>' + lv.name + '</td>' + ds.map((d) => cell(d, 'L' + i)).join('') + '</tr>'; });
   h += '<tr><td>Вся игра → «Побег»</td>' + ds.map((d) => cell(d, 'full_escape')).join('') + '</tr><tr><td>Вся игра → «Истинный выход»</td>' + ds.map((d) => cell(d, 'full_true')).join('') + '</tr></table>';
@@ -3050,8 +3051,8 @@ function refreshMenu() {
   const d = $('bDiff'); if (d) d.innerHTML = 'Сложность: <b>' + diffCfg().name + '</b>';
 }
 function setupFeatures() {
-  const order = ['easy', 'normal', 'nightmare'];
-  $('bDiff').onclick = () => { AU.click(); SAVE.settings.diff = order[(order.indexOf(SAVE.settings.diff) + 1) % 3]; saveGame(); refreshMenu(); toast('Сложность: ' + diffCfg().name + ' — ' + ({ easy: 'монстры медленнее, урон ниже, больше припасов', normal: 'как задумано', nightmare: 'монстры быстрее и злее, урон выше, батарейка садится быстрее, больше предметов' })[SAVE.settings.diff], 3500); };
+  const order = ['easy', 'normal', 'nightmare', 'cute'];
+  $('bDiff').onclick = () => { AU.click(); SAVE.settings.diff = order[(order.indexOf(SAVE.settings.diff) + 1) % order.length]; saveGame(); refreshMenu(); toast('Сложность: ' + diffCfg().name + ' — ' + ({ easy: 'монстры медленнее, урон ниже, больше припасов', normal: 'как задумано', nightmare: 'монстры быстрее и злее, урон выше, батарейка садится быстрее, больше предметов', cute: 'очень легко и мило: добрые медленные монстрики, пистолетик, сердечки и признания в любви 💕' })[SAVE.settings.diff], 3500); };
   $('bContinue').onclick = () => { AU.init(); AU.click(); if (TOUCH.on) enterFullscreen(true); loadCheckpoint(); };
   $('bRecords').onclick = () => { AU.click(); openSub(recordsHTML()); };
   { const st = $('bStart'), orig = st.onclick; let armed = 0; st.onclick = (e) => { if (SAVE.cp && LEVELS[SAVE.cp.lv] && performance.now() - armed > 3500) { armed = performance.now(); AU.click(); toast('Есть сохранённая контрольная точка. Нажмите «Новая игра» ещё раз, чтобы начать заново (точка будет стёрта).'); return; } armed = 0; orig(e); }; }
@@ -3694,7 +3695,7 @@ function coopExitSave() { if (!COOP.saveSP) return; SAVE = COOP.saveSP; COOP.sav
     let h = _rh(); let rec = {};
     try { rec = (JSON.parse(localStorage.getItem(COOP_KEY) || '{}') || {}).records || {}; } catch (e) { }
     if (COOP.on) rec = SAVE.records || rec;
-    const ds = ['easy', 'normal', 'nightmare']; const cell = (d, k) => '<td>' + (rec[d + ':' + k] ? fmtTime(rec[d + ':' + k]) : '—') + '</td>';
+    const ds = ['easy', 'normal', 'nightmare', 'cute']; const cell = (d, k) => '<td>' + (rec[d + ':' + k] ? fmtTime(rec[d + ':' + k]) : '—') + '</td>';
     h += '<h2 style="margin-top:18px">РЕКОРДЫ · КООПЕРАТИВ</h2><table><tr><td></td>' + ds.map((d) => '<td style="color:#ffd85a">' + DIFFS[d].name + '</td>').join('') + '</tr>';
     LEVELS.forEach((lv, i) => { h += '<tr><td>' + lv.name + '</td>' + ds.map((d) => cell(d, 'L' + i)).join('') + '</tr>'; });
     h += '<tr><td>Вся игра → «Побег»</td>' + ds.map((d) => cell(d, 'full_escape')).join('') + '</tr><tr><td>Вся игра → «Истинный выход»</td>' + ds.map((d) => cell(d, 'full_true')).join('') + '</tr></table>';
@@ -4472,7 +4473,7 @@ function coopInit() {
     AU.click(); const c = COOP.code; if (!c) return; const done = () => toast('Код ' + c + ' скопирован — отправьте его другу.');
     try { navigator.clipboard.writeText(c).then(done, () => toast('Код комнаты: ' + c, 6000)); } catch (e) { toast('Код комнаты: ' + c, 6000); }
   };
-  $('coDiff').onclick = () => { AU.click(); const o = ['easy', 'normal', 'nightmare']; COOP.diff = o[(o.indexOf(COOP.diff) + 1) % 3]; $('coDiff').textContent = DIFFS[COOP.diff].name; coopLobbyInfo(); };
+  $('coDiff').onclick = () => { AU.click(); const o = ['easy', 'normal', 'nightmare', 'cute']; COOP.diff = o[(o.indexOf(COOP.diff) + 1) % o.length]; $('coDiff').textContent = DIFFS[COOP.diff].name; coopLobbyInfo(); };
   $('coLvl').onchange = () => { COOP.lv = +$('coLvl').value || 0; coopLobbyInfo(); };
   $('coStart').onclick = () => { AU.click(); if (!COOP.linked) { coStat('Напарник ещё не подключился.', 'err'); return; } coopHostStartLevel(+$('coLvl').value || 0, { ng: true, loop: 0 }); };
   $('coBack').onclick = () => { AU.click(); coopLeave(true); COOP.role = null; $('coop').classList.add('hidden'); $('menu').classList.remove('hidden'); };
@@ -5070,5 +5071,392 @@ function monFxTick(dt) {
 }
 
 </script><!--/COOP-->
+<!--CUTE--><style>
+body.cute #hud .bar i{background:linear-gradient(90deg,#ff8cc6,#ffc4e1)!important}
+body.cute #hud .bar span,body.cute #obj,body.cute #msgs,body.cute #inv{color:#ffe0f0!important;text-shadow:0 0 6px #ff5fa8}
+body.cute #prompt{color:#ffe6f4;border-color:#ff9ccf}
+body.cute .btn{border-color:#ff9ccf;color:#ffe6f4;background:rgba(60,18,44,.72)}
+body.cute .btn:hover{background:rgba(120,40,90,.8)}
+body.cute #menu h1,body.cute #menu h2{text-shadow:0 0 18px #ff5fa8}
+body.cute.cutegun #cross{width:18px;height:18px;margin:-9px 0 0 -9px;background:none;border:2px solid rgba(255,140,200,.9);box-shadow:0 0 6px #ff5fa8}
+body.cute.cutegun #cross::after{content:'';position:absolute;left:6px;top:6px;width:2px;height:2px;background:#fff;border-radius:50%}
+#cuteAmmo{position:absolute;right:calc(22px + env(safe-area-inset-right));bottom:calc(82px + env(safe-area-inset-bottom));font:bold 22px "Courier New",monospace;color:#ffd6ec;text-shadow:0 0 8px #ff4fa8;z-index:6;pointer-events:none}
+#cuteAmmo small{font-size:13px;color:#ffb3d9;display:block;text-align:right}
+body.touch #cuteAmmo{bottom:auto;top:calc(64px + env(safe-area-inset-top));right:calc(18px + env(safe-area-inset-right));font-size:18px}
+#cuteLove{position:fixed;left:4%;right:4%;top:11%;text-align:center;font:bold clamp(30px,6vw,72px) "Segoe Script","Comic Sans MS",cursive;color:#fff0f8;text-shadow:0 0 12px #ff4fa8,0 0 34px #ff2d95,0 0 60px #ff2d95;pointer-events:none;z-index:45;opacity:0;transition:opacity 1.2s}
+#cuteLove.on{opacity:1}
+#cuteHurt{position:fixed;inset:0;pointer-events:none;z-index:5;opacity:0;background:radial-gradient(ellipse at center,rgba(255,170,215,0) 40%,rgba(255,105,180,.75) 100%)}
+#note.cutenote .paper{background:#ffe9f4;color:#6a2350;background-image:repeating-linear-gradient(0deg,rgba(0,0,0,0) 0,rgba(0,0,0,0) 27px,rgba(255,120,180,.25) 28px);box-shadow:0 0 40px #ff5fa8}
+#ending.cute{background:radial-gradient(ellipse at center,rgba(90,20,60,.94),rgba(20,0,14,.96))}
+#cuteEndLove{margin:14px 0 4px;font:bold 26px "Segoe Script","Comic Sans MS",cursive;color:#ffe0f0;text-shadow:0 0 12px #ff4fa8}
+#tbShoot{right:calc(122px + env(safe-area-inset-right));bottom:calc(192px + env(safe-area-inset-bottom));width:76px;height:76px;border-color:rgba(255,150,205,.8);color:#ffd6ec}
+#tbReload{right:calc(214px + env(safe-area-inset-right));bottom:calc(118px + env(safe-area-inset-bottom));border-color:rgba(255,150,205,.8);color:#ffd6ec;font-size:20px}
+</style>
+<div id="cuteLove"></div><div id="cuteHurt"></div><div id="cuteAmmo" class="hidden"></div>
+<script>
+// ====================== MODE «Для Сашечки 💕»: easy + cute + pistol ======================
+const CUTE = { on: false, love: 'Я люблю свою девочку Сашечку ❤️', MAG: 6, BOOP: 25, lastLv: null, last: performance.now(), cpT: 0, heart: null, rk: 0, shootT: 0, reloadT: 0, recoil: 0, flashT: 0, pickups: [], hearts: [], hp: { smiler: 3, crawler: 2, glitch: 3, flesh: 4 } };
+const HASCO = typeof COOP !== 'undefined';
+function isCute() { return diffCfg() === DIFFS.cute; }
+function cuteMons() { return L ? (L.monsters || [L.monster]).filter(Boolean) : []; }
+function cuteLocal() { return !HASCO || !COOP.on || P === COOP.me; }
+function cuteNet() { return HASCO && COOP.on && COOP.linked; }
+function cuteHost() { return !HASCO || !COOP.on || COOP.role === 'host'; }
+// ---------- textures ----------
+function cuteHeartPath(g, x, y, s) { g.beginPath(); g.moveTo(x, y + s * 0.3); g.bezierCurveTo(x, y, x - s * 0.5, y, x - s * 0.5, y + s * 0.32); g.bezierCurveTo(x - s * 0.5, y + s * 0.62, x, y + s * 0.78, x, y + s); g.bezierCurveTo(x, y + s * 0.78, x + s * 0.5, y + s * 0.62, x + s * 0.5, y + s * 0.32); g.bezierCurveTo(x + s * 0.5, y, x, y, x, y + s * 0.3); g.fill(); }
+function cuteHeartTex() { if (!CUTE.heart) CUTE.heart = canvasTex(64, 64, (g) => { g.shadowColor = '#fff'; g.shadowBlur = 6; g.fillStyle = '#fff'; cuteHeartPath(g, 32, 8, 50); }, false); return CUTE.heart; }
+function cuteNeonTex(l1, l2) {
+  return canvasTex(1024, 256, (g, w, h) => {
+    g.clearRect(0, 0, w, h); g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = 'rgba(40,4,28,0.62)'; g.beginPath(); if (g.roundRect) g.roundRect(14, 14, w - 28, h - 28, 40); else g.rect(14, 14, w - 28, h - 28); g.fill();
+    g.strokeStyle = '#ff6fb8'; g.lineWidth = 5; g.shadowColor = '#ff2d95'; g.shadowBlur = 16; g.stroke(); g.shadowBlur = 0;
+    g.font = 'bold 76px "Segoe Script", "Comic Sans MS", cursive';
+    const line = (t, y) => { for (const [b, c] of [[34, '#ff2d95'], [16, '#ff6fb8'], [4, '#ffd6ec']]) { g.shadowColor = c; g.shadowBlur = b; g.fillStyle = b > 20 ? '#ff3d9e' : b > 10 ? '#ff7ac0' : '#ffd0e8'; g.fillText(t, w / 2, y); } };
+    line(l1, 82); line(l2, 180);
+    g.shadowColor = '#ff2d95'; g.shadowBlur = 18; g.fillStyle = '#ff5fae';
+    const m = g.measureText(l2).width; cuteHeartPath(g, w / 2 + m / 2 + 52, 146, 64); cuteHeartPath(g, w / 2 - m / 2 - 52, 150, 48);
+    for (let i = 0; i < 6; i++) { g.globalAlpha = 0.7; cuteHeartPath(g, 60 + Math.random() * 900, 22 + Math.random() * 14, 16 + Math.random() * 10); }
+    g.globalAlpha = 1;
+  }, false);
+}
+// ---------- heart particles (sprite pool) ----------
+function cuteHearts(x, y, z, n, col, spd) {
+  if (!CUTE.heartMat) CUTE.heartMat = new THREE.SpriteMaterial({ map: cuteHeartTex(), transparent: true, depthWrite: false, fog: false });
+  for (let i = 0; i < n; i++) {
+    let h = CUTE.hearts.find((o) => o.life <= 0);
+    if (!h) { if (CUTE.hearts.length >= 90) break; const s = new THREE.Sprite(CUTE.heartMat.clone()); s.renderOrder = 5; scene.add(s); h = { s, life: 0 }; CUTE.hearts.push(h); }
+    const sp = spd || 2; h.x = x + rnd(-0.2, 0.2); h.y = y + rnd(-0.2, 0.2); h.z = z + rnd(-0.2, 0.2); h.vx = rnd(-sp, sp); h.vy = rnd(0.4, sp * 1.3); h.vz = rnd(-sp, sp);
+    h.life = h.max = rnd(0.7, 1.5); h.sz = rnd(0.12, 0.3); h.s.visible = true;
+    const c = new THREE.Color(col != null ? col : [0xff5fae, 0xff8cc6, 0xffb3d9, 0xff3d8f, 0xffffff][Math.random() * 5 | 0]); h.s.material.color.copy(c).multiplyScalar(1.6);
+  }
+}
+function cuteHeartsTick(dt) { for (const h of CUTE.hearts) { if (h.life <= 0) continue; h.life -= dt; if (h.life <= 0) { h.s.visible = false; continue; } h.vx *= 1 - dt * 1.5; h.vz *= 1 - dt * 1.5; h.vy -= dt * 1.2; h.x += h.vx * dt; h.y += h.vy * dt; h.z += h.vz * dt; h.s.position.set(h.x, h.y, h.z); const k = h.life / h.max; h.s.scale.setScalar(h.sz * (0.6 + 0.4 * Math.sin(Math.min(1, (1 - k) * 6) * 1.57))); h.s.material.opacity = Math.min(1, k * 2); } }
+// ---------- sounds ----------
+const CSND = {
+  pew() { AU.tone({ freq: 1250, freqEnd: 260, dur: 0.14, gain: 0.13, wave: 'square', lp: 2600 }); AU.nz({ type: 'bandpass', freq: 2400, freqEnd: 900, Q: 0.8, dur: 0.12, gain: 0.22 }); AU.tone({ freq: 1568, dur: 0.08, gain: 0.04, wave: 'sine', delay: 0.05 }); },
+  far() { AU.tone({ freq: 1000, freqEnd: 300, dur: 0.12, gain: 0.05, wave: 'square', lp: 1600 }); },
+  click() { AU.tone({ freq: 2200, dur: 0.03, gain: 0.06, wave: 'square' }); },
+  reload() { AU.tone({ freq: 700, dur: 0.05, gain: 0.07, wave: 'square', lp: 1500 }); AU.tone({ freq: 1100, dur: 0.06, gain: 0.07, wave: 'square', lp: 1800, delay: 0.5 }); AU.tone({ freq: 1500, dur: 0.06, gain: 0.06, wave: 'triangle', delay: 0.85 }); },
+  hit() { AU.tone({ freq: 880, freqEnd: 1320, dur: 0.12, gain: 0.09, wave: 'triangle' }); },
+  pop() { [523, 659, 784, 1047, 1319].forEach((f, i) => AU.tone({ freq: f, dur: 0.22, gain: 0.08, wave: 'triangle', delay: i * 0.06 })); AU.nz({ type: 'highpass', freq: 3000, dur: 0.25, gain: 0.08 }); },
+  boop() { AU.tone({ freq: 520, freqEnd: 880, dur: 0.16, gain: 0.14, wave: 'sine' }); AU.tone({ freq: 880, freqEnd: 1240, dur: 0.18, gain: 0.1, wave: 'sine', delay: 0.12 }); },
+  pick() { AU.tone({ freq: 988, dur: 0.1, gain: 0.08, wave: 'triangle' }); AU.tone({ freq: 1319, dur: 0.16, gain: 0.08, wave: 'triangle', delay: 0.08 }); },
+};
+function cuteMuted(fn) { const ks = ['stinger', 'screech', 'tone', 'nz', 'giggle', 'clicks', 'growl', 'hurt'], keep = {}; for (const k of ks) { keep[k] = AU[k]; AU[k] = function () { }; } try { return fn(); } finally { for (const k of ks) AU[k] = keep[k]; } }
+// ---------- texts ----------
+const CUTE_NOTES = [
+  'Если ты это читаешь — знай: здесь не страшно, пока ты улыбаешься. Лампы гудят, как котики мурчат.',
+  'Ползун просто очень хочет обнимашек. Но обнимается он неаккуратно — лучше на цыпочках.',
+  'Улыбака улыбается, потому что увидел тебя. Смотри на него — ему приятно, и он стоит смирно.',
+  'Помеха стесняется света. Выключи фонарик — и она покраснеет и отвернётся.',
+  'Мясная тень на самом деле мягкая. Но всё равно спрячься в шкафчик, если она идёт обниматься.',
+  'Выход всегда рядом с тем, кого любишь. Держись рядом со своим человеком.',
+  'Я тут посчитал лампы. Их ровно столько, сколько раз я думал о тебе сегодня. Много.',
+  'Всё будет хорошо. Ты сильная, смелая и самая милая в этом лабиринте.',
+];
+const CUTE_DEATH = 'Монстрик обнял тебя слишком крепко, и ты уснула прямо на ковре.\nНичего страшного — просыпайся, солнышко, попробуем ещё разок!';
+const CUTE_RADIO = ['Ты справляешься просто замечательно!', 'Я рядом, солнышко.', 'Не бойся, монстрики сегодня добрые.', 'Ты самая храбрая!', 'Чмок через рацию 💋', 'Если что — у тебя есть пистолетик 🔫💕'];
+// ---------- level dressing: neon love text, pickups, love note, secret heart room ----------
+function cuteSetupLevel() {
+  const Lv = L, W = Lv.W, I = Lv.I, rng = mulberry32((Lv.seed ^ 0x5a5a1e) >>> 0), D = (o) => { Lv.disp.push(o); return o; };
+  Lv.cute = { neon: [], pickups: [] }; CUTE.pickups = Lv.cute.pickups;
+  const sx = Lv.start.x, sy = Lv.start.y, dist = bfsDist(W, Lv.g, sx, sy);
+  const shiftSet = new Set(Lv.shift && Lv.shift.cands ? Lv.shift.cands.map(([x, y]) => I(x, y)) : []);
+  const okTile = (x, y) => !Lv.solid(x, y) && !Lv.special[I(x, y)] && !Lv.secretTile(x, y) && dist[I(x, y)] >= 0;
+  const slots = [];
+  for (const [x, y] of Lv.floorTiles) { if (!okTile(x, y)) continue; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const wx = x + dx, wy = y + dy; if (wx > 0 && wy > 0 && wx < W - 1 && wy < W - 1 && Lv.g[I(wx, wy)] === 1 && !shiftSet.has(I(wx, wy)) && !(Lv.wallDecor && Lv.wallDecor[I(wx, wy)])) slots.push([x, y, dx, dy]); } }
+  shuffle(slots, rng);
+  const tex = D(cuteNeonTex('Я люблю свою девочку', 'Сашечку')), geo = D(new THREE.PlaneGeometry(2.7, 0.675));
+  const mat = D(new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, fog: false })); mat.color.setScalar(1.6);
+  const putNeon = (s, m, y) => { const [x, z, dx, dy] = s; const pl = new THREE.Mesh(geo, m || mat); pl.position.set(x * T + dx * (T / 2 - 0.03), y || 1.75, z * T + dy * (T / 2 - 0.03)); pl.rotation.y = Math.atan2(-dx, -dy); Lv.group.add(pl); const k = I(x + dx, z + dy); Lv.wallDecor = Lv.wallDecor || {}; (Lv.wallDecor[k] = Lv.wallDecor[k] || []).push(pl); Lv.cute.neon.push(pl); return pl; };
+  // one visible right at the start, then spread over the level
+  const used = []; const far = (s, r) => used.every((u) => Math.hypot(u[0] - s[0], u[1] - s[1]) >= r);
+  const first = slots.filter((s) => dist[I(s[0], s[1])] >= 1 && dist[I(s[0], s[1])] <= 3).sort((a, b) => dist[I(a[0], a[1])] - dist[I(b[0], b[1])])[0];
+  if (first) { putNeon(first); used.push(first); }
+  const nNeon = Lv.boss ? 9 : 7;
+  for (const s of slots) { if (Lv.cute.neon.length >= nNeon) break; if (used.includes(s) || !far(s, 7)) continue; putNeon(s); used.push(s); }
+  // pickups
+  const floor = Lv.floorTiles.filter(([x, y]) => okTile(x, y) && !(x === sx && y === sy)); shuffle(floor, rng);
+  const busy = []; const freeT = (x, y, r) => busy.every((b) => Math.hypot(b[0] - x, b[1] - y) >= r);
+  const add = (kind, x, y) => { busy.push([x, y]); Lv.cute.pickups.push(cuteMakePickup(Lv, kind, x, y)); };
+  const nearNote = floor.filter(([x, y]) => dist[I(x, y)] >= 3 && dist[I(x, y)] <= 7).sort((a, b) => dist[I(a[0], a[1])] - dist[I(b[0], b[1])])[0];
+  if (nearNote) add('love', nearNote[0], nearNote[1]);
+  const plan = []; for (let i = 0; i < (Lv.boss ? 8 : 6); i++) plan.push('ammo'); plan.push('battery', 'battery', 'bottle', 'bottle', 'medkit');
+  let pi = 0; for (const [x, y] of floor) { if (pi >= plan.length) break; if (dist[I(x, y)] < 3 || !freeT(x, y, 5)) continue; add(plan[pi++], x, y); }
+  // secret heart room: a far dead end
+  const dead = floor.filter(([x, y]) => dist[I(x, y)] > Lv.maxD * 0.45 && [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => Lv.solid(x + dx, y + dy)).length === 3 && freeT(x, y, 3));
+  if (dead.length) {
+    const [ex, ey] = dead[0]; add('bigheart', ex, ey); Lv.cute.egg = [ex, ey];
+    const t2 = D(cuteNeonTex('Сашечка — моё', 'сокровище')), m2 = D(mat.clone()); m2.map = t2;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (Lv.solid(ex + dx, ey + dy) && Lv.g[I(ex + dx, ey + dy)] === 1) putNeon([ex, ey, dx, dy], m2, 1.55);
+    const hm = D(new THREE.SpriteMaterial({ map: cuteHeartTex(), transparent: true, depthWrite: false, fog: false })); hm.color.set(0xff6fb8).multiplyScalar(1.8);
+    Lv.cute.eggHearts = []; for (let i = 0; i < 14; i++) { const s = new THREE.Sprite(hm); s.position.set(ex * T + rnd(-1.1, 1.1), rnd(0.4, 2.6), ey * T + rnd(-1.1, 1.1)); s.scale.setScalar(rnd(0.15, 0.35)); s.userData.b = s.position.y; s.userData.p = Math.random() * 6; Lv.group.add(s); Lv.cute.eggHearts.push(s); }
+  }
+  // warmer, brighter, softer
+  scene.fog.density *= 0.6; scene.fog.color.lerp(new THREE.Color(0xff9fca), 0.3);
+  hemi.color.lerp(new THREE.Color(0xffd6e8), 0.4); hemi.groundColor.lerp(new THREE.Color(0x6a3050), 0.5);
+  for (const m of cuteMons()) cuteDecorate(m);
+}
+function cuteMakePickup(Lv, kind, tx, ty) {
+  const D = (o) => { Lv.disp.push(o); return o; }, g = new THREE.Group(), bm = (c, s) => { const m = D(new THREE.MeshBasicMaterial({ color: c })); m.color.multiplyScalar(s || 1.3); return m; };
+  const box = (w, h, d, c, x, y, z) => { const me = new THREE.Mesh(D(new THREE.BoxGeometry(w, h, d)), bm(c)); me.position.set(x || 0, y || 0, z || 0); g.add(me); return me; };
+  const cyl = (r, h, c, x, y) => { const me = new THREE.Mesh(D(new THREE.CylinderGeometry(r, r, h, 10)), bm(c)); me.position.set(x || 0, y || 0, 0); g.add(me); return me; };
+  if (kind === 'ammo') { box(0.34, 0.16, 0.22, 0xff6fb0); box(0.36, 0.03, 0.24, 0xffffff, 0, 0.09); for (let i = 0; i < 3; i++) cyl(0.025, 0.12, 0xffd34a, -0.08 + i * 0.08, 0.15); }
+  else if (kind === 'battery') { cyl(0.06, 0.24, 0xffd34a); cyl(0.03, 0.04, 0xdddddd, 0, 0.14); }
+  else if (kind === 'bottle') { cyl(0.07, 0.24, 0x7de0a0); cyl(0.03, 0.1, 0x7de0a0, 0, 0.17); }
+  else if (kind === 'medkit') { box(0.3, 0.2, 0.2, 0xffffff); box(0.06, 0.16, 0.21, 0xff4f8f, 0, 0, 0.005); box(0.16, 0.06, 0.21, 0xff4f8f, 0, 0, 0.005); }
+  else if (kind === 'love') { box(0.36, 0.24, 0.03, 0xffd0e6); }
+  const hs = new THREE.Sprite(D(new THREE.SpriteMaterial({ map: cuteHeartTex(), transparent: true, depthWrite: false, fog: false }))); hs.material.color.set(kind === 'bigheart' ? 0xff3d8f : 0xff8cc6).multiplyScalar(1.7);
+  hs.scale.setScalar(kind === 'bigheart' ? 0.9 : kind === 'love' ? 0.22 : 0.18); hs.position.y = kind === 'bigheart' ? 0 : kind === 'love' ? 0 : 0.32; if (kind === 'love') hs.position.z = 0.03; g.add(hs);
+  const glow = new THREE.Sprite(D(new THREE.SpriteMaterial({ map: GLOW_TEX, color: 0xff6fb8, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.55, fog: false }))); glow.scale.setScalar(kind === 'bigheart' ? 2.4 : 0.9); g.add(glow);
+  const y0 = kind === 'bigheart' ? 1.3 : 0.55; g.position.set(tx * T, y0, ty * T); Lv.group.add(g);
+  return { kind, x: tx * T, z: ty * T, y0, g, active: true, ph: Math.random() * 6 };
+}
+const CUTE_PICK = {
+  ammo: () => { P.ammoRes = Math.min(60, (P.ammoRes || 0) + 6); return '+6 ПАТРОНОВ 💕'; },
+  battery: () => { P.battery = Math.min(100, P.battery + 45); return 'БАТАРЕЙКА 🔋'; },
+  bottle: () => { P.bottles = (P.bottles || 0) + 1; return 'БУТЫЛКА'; },
+  medkit: () => { P.health = 100; P.hurtT = 0; return 'ЗДОРОВЬЕ 💗'; },
+  bigheart: () => { P.health = 100; P.stamina = 100; P.battery = 100; P.ammo = CUTE.MAG; P.ammoRes = Math.min(60, (P.ammoRes || 0) + 18); msg('Тайник любви! Здоровье, фонарик и патроны — всё полное. Сашечка, ты моё сокровище ❤️'); return 'ТАЙНИК ЛЮБВИ 💖'; },
+  love: () => { cuteLoveNote(); return null; },
+};
+function cuteLoveNote() {
+  AU.note(); $('noteTitle').textContent = 'Записка для Сашечки 💌';
+  $('noteText').textContent = 'Сашечка, солнышко моё!\nДаже в самом жутком лабиринте мне не страшно, потому что я думаю о тебе. Ты делаешь любой коридор светлее, а любой гул ламп — музыкой.\nЯ люблю свою девочку Сашечку ❤️ Больше всех лампочек Закулисья.';
+  $('noteSig').textContent = '— твой Глеб'; $('note').classList.add('cutenote'); $('note').classList.remove('hidden'); G.state = 'note';
+}
+function cutePickupsTick(dt) {
+  const Lv = L; if (!Lv || !Lv.cute) return;
+  for (const p of Lv.cute.pickups) { if (!p.active) continue; p.ph += dt; p.g.position.y = p.y0 + Math.sin(p.ph * 2) * 0.06; p.g.rotation.y += dt * 1.6;
+    if (G.state === 'play' && cuteLocal() && !P.down && !P.hidden && Math.hypot(P.x - p.x, P.z - p.z) < 1.1) { p.active = false; p.g.visible = false; const t = CUTE_PICK[p.kind](); cuteHearts(p.x, p.y0, p.z, 12); CSND.pick(); if (t) pop(t, '#ff9fd0'); } }
+  if (Lv.cute.eggHearts) for (const s of Lv.cute.eggHearts) s.position.y = s.userData.b + Math.sin(G.time * 1.5 + s.userData.p) * 0.12;
+}
+// ---------- cute monster touches: a bow + blush cheeks ----------
+function cuteDecorate(m) {
+  if (!m || m.cuteDeco) return; m.cuteDeco = true; m.cuteHp = CUTE.hp[m.kind] || 3;
+  const D = (o) => m.D(o), f = m.face, s = m.kind === 'smiler' ? 1.3 : m.kind === 'flesh' ? 1.4 : m.kind === 'crawler' ? 0.8 : 1;
+  const pink = D(new THREE.MeshBasicMaterial({ color: 0xff5fae })); pink.color.multiplyScalar(1.5);
+  const g = new THREE.Group(); g.position.set(f.x, f.y + 0.3 * s, f.z - 0.05); g.scale.setScalar(s);
+  const cone = D(new THREE.ConeGeometry(0.1, 0.18, 4)); for (const sd of [-1, 1]) { const c = new THREE.Mesh(cone, pink); c.rotation.z = sd * Math.PI / 2; c.position.x = sd * 0.1; g.add(c); }
+  const knot = new THREE.Mesh(D(new THREE.SphereGeometry(0.05, 8, 6)), pink); g.add(knot); m.group.add(g);
+  const bl = D(new THREE.SpriteMaterial({ map: SOFT_TEX, color: 0xff6fa8, transparent: true, opacity: 0.85, depthWrite: false, fog: false }));
+  for (const sd of [-1, 1]) { const sp = new THREE.Sprite(bl); sp.scale.set(0.16 * s, 0.1 * s, 1); sp.position.set(f.x + sd * 0.17 * s, f.y - 0.08 * s, f.z + 0.06); m.group.add(sp); }
+}
+// ---------- monster down / respawn ----------
+function cuteFarTile(m, minR) {
+  const ps = [P]; if (HASCO && COOP.on && COOP.R && COOP.R.x != null) ps.push(P === COOP.me ? COOP.R : COOP.me);
+  let best = null, bd = -1; for (let i = 0; i < 40; i++) { const t = m.randomTile(); if (L.secretTile(t[0], t[1])) continue; const d = Math.min(...ps.map((p) => Math.hypot(t[0] * T - p.x, t[1] * T - p.z) / T)); if (d > bd) { bd = d; best = t; } if (d >= minR && Math.random() < 0.5) break; }
+  return best || m.randomTile();
+}
+function cuteReset(m) { m.path = null; m.state = 'patrol'; m.memory = 0; m.stun = 0; m.waitT = 1; if (m.kind === 'smiler') m.huntT = 0; if (m.kind === 'crawler') { m.climb = m.climbTarget = 0; m.dropTele = false; m.dropT = 0; } if (m.blobs) m.blobs.length = 0; }
+function cuteMoveFar(m, minR) { const t = cuteFarTile(m, minR); m.x = t[0] * T; m.z = t[1] * T; cuteReset(m); if (m.sync) m.sync(); }
+function cuteKillMon(m, net) {
+  cuteHearts(m.x, (m.height || 2) * 0.55, m.z, 40, null, 3.2); sparks(m.x, (m.height || 2) * 0.55, m.z, 30, 0xffb3e0); puff(m.x, 1, m.z, 10, 0xffc4e1, 0.8, 1.2); CSND.pop(); pop('ПУФ! 💖', '#ff9fd0');
+  const dur = 60 + Math.random() * 30;
+  m.cuteDownT = G.time + (cuteHost() ? dur : 1e9); m.cuteGuestT = G.time + dur + 6; m.group.visible = false;
+  if (cuteHost()) { cuteMoveFar(m, 18); m.grace = Math.max(m.grace || 0, 5); if (cuteNet()) coopSend({ t: 'ckill', ls: L.seed, mi: cuteMons().indexOf(m), d: Math.round(dur) }); }
+}
+function cuteRespawn(m) { m.cuteDownT = 0; m.cuteHp = CUTE.hp[m.kind] || 3; if (cuteHost()) { cuteMoveFar(m, 14); m.grace = Math.max(m.grace || 0, 4); if (cuteNet()) coopSend({ t: 'crsp', ls: L.seed, mi: cuteMons().indexOf(m) }); } m.group.visible = true; }
+{
+  for (const C of [Smiler, Crawler, Glitch, Flesh]) {
+    const pu = C.prototype.update; if (!pu) continue;
+    C.prototype.update = function (dt) {
+      if (this.cuteDownT) { if (G.time < this.cuteDownT) { this.group.visible = false; this.dist = 99; this.grace = Math.max(this.grace || 0, 2); this.idle = 'grace'; return; } cuteRespawn(this); }
+      const r = pu.call(this, dt);
+      if (isCute() && this.kind !== 'smiler') { // gives up quickly
+        if (this.state === 'chase' || this.state === 'hunt') { this.cuteChT = (this.cuteChT || 0) + dt; if (this.cuteChT > 3.6) { this.cuteChT = 0; cuteReset(this); this.grace = Math.max(this.grace || 0, 1.5); } } else this.cuteChT = 0;
+      }
+      return r;
+    };
+    const ph = C.prototype.hear; if (ph) C.prototype.hear = function (x, z, r, t) { return ph.call(this, x, z, isCute() ? r * 0.6 : r, t); };
+  }
+  const sp = Monster.prototype.seesPlayer; Monster.prototype.seesPlayer = function (maxD) { return sp.call(this, isCute() ? maxD * 0.6 : maxD); };
+}
+// ---------- pistol ----------
+function cuteBuildGun() {
+  const g = new THREE.Group(), bm = (c) => new THREE.MeshBasicMaterial({ color: c });
+  const box = (w, h, d, c, x, y, z, rx) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bm(c)); m.position.set(x, y, z); if (rx) m.rotation.x = rx; g.add(m); return m; };
+  box(0.05, 0.05, 0.24, 0xff7fbf, 0, 0.03, -0.06); box(0.052, 0.012, 0.2, 0xffd0e8, 0, 0.06, -0.06); box(0.046, 0.04, 0.18, 0x5a2a46, 0, -0.005, -0.04);
+  box(0.044, 0.12, 0.06, 0xd9468f, 0, -0.06, 0.03, -0.25); box(0.012, 0.04, 0.03, 0x5a2a46, 0, -0.03, -0.02);
+  const br = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.04, 10), bm(0x333333)); br.rotation.x = Math.PI / 2; br.position.set(0, 0.03, -0.19); g.add(br);
+  const hs = new THREE.Sprite(new THREE.SpriteMaterial({ map: cuteHeartTex(), color: 0xff3d8f, depthWrite: false })); hs.scale.setScalar(0.035); hs.position.set(0.03, 0.03, -0.03); g.add(hs);
+  const fl = new THREE.Sprite(new THREE.SpriteMaterial({ map: GLOW_TEX, color: 0xffd0a0, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); fl.scale.setScalar(0.22); fl.position.set(0, 0.03, -0.24); fl.visible = false; g.add(fl);
+  const fh = new THREE.Sprite(new THREE.SpriteMaterial({ map: cuteHeartTex(), color: 0xff8cc6, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); fh.scale.setScalar(0.09); fh.position.set(0, 0.03, -0.25); fh.visible = false; g.add(fh);
+  g.traverse((o) => { o.renderOrder = 10; o.frustumCulled = false; if (o.material) o.material.fog = false; });
+  g.scale.setScalar(0.72); g.visible = false; camera.add(g); CUTE.gun = g; CUTE.flash = [fl, fh];
+}
+function cuteHasGun() { return isCute() && G.state === 'play' && !(HASCO && COOP.on && P.down) && !P.hidden; }
+function cuteRay(o, d, shooter) { // host-side: nearest monster hit by a ray, null if a wall is in the way
+  let best = null, bt = 40;
+  for (const m of cuteMons()) {
+    if (!m.alive || m.cuteDownT) continue; const hx = d.x, hz = d.z, l2 = hx * hx + hz * hz; if (l2 < 1e-4) continue;
+    const t = ((m.x - o.x) * hx + (m.z - o.z) * hz) / l2; if (t <= 0 || t > bt) continue;
+    const px = o.x + d.x * t, py = o.y + d.y * t, pz = o.z + d.z * t, lat = Math.hypot(px - m.x, pz - m.z);
+    const top = m.kind === 'crawler' ? (L.H || 3) + 0.3 : (m.height || 2) + 0.4;
+    if (lat > (m.radius || 0.6) * 0.85 + 0.3 || py < -0.4 || py > top) continue;
+    if (!losClear(o.x, o.z, m.x - hx / Math.sqrt(l2) * 0.6, m.z - hz / Math.sqrt(l2) * 0.6)) continue;
+    best = { m, x: px, y: py, z: pz }; bt = t;
+  }
+  return best;
+}
+function cuteApplyHit(h) { // host-authoritative damage
+  const m = h.m; m.cuteHp = (m.cuteHp == null ? CUTE.hp[m.kind] || 3 : m.cuteHp) - 1; m.stun = Math.max(m.stun || 0, 0.6); m.grace = Math.max(m.grace || 0, 0.4);
+  cuteHearts(h.x, h.y, h.z, 8); CSND.hit();
+  if (cuteNet()) coopSend({ t: 'chit', ls: L.seed, p: [h.x, h.y, h.z].map(coR2) });
+  if (m.cuteHp <= 0) cuteKillMon(m); else pop('ПОПАЛА! ' + '💗'.repeat(m.cuteHp), '#ffb3d9');
+}
+function cuteShoot() {
+  if (!cuteHasGun() || G.time < CUTE.shootT || CUTE.reloadT > G.time) return false;
+  if (!(P.ammo > 0)) { if (P.ammoRes > 0) { cuteReload(); return false; } CSND.click(); CUTE.shootT = G.time + 0.3; msg('Патроны кончились — ищи розовые коробочки 💕'); return false; }
+  P.ammo--; CUTE.shootT = G.time + 0.26; CUTE.recoil = 1; CUTE.flashT = 0.06; G.fovKick = Math.max(G.fovKick || 0, 2); G.shake = Math.max(G.shake, 0.05); CSND.pew();
+  const o = new THREE.Vector3(), d = new THREE.Vector3(); camera.getWorldPosition(o); camera.getWorldDirection(d);
+  emitNoise(P.x, P.z, 10, 'player');
+  if (cuteHost()) { const h = cuteRay(o, d); if (h) cuteApplyHit(h); }
+  else { const h = cuteRay(o, d); if (h) cuteHearts(h.x, h.y, h.z, 4); }
+  if (cuteNet()) coopSend({ t: 'cshot', ls: L.seed, o: [o.x, o.y, o.z].map(coR3), d: [d.x, d.y, d.z].map(coR3) });
+  if (P.ammo === 0 && P.ammoRes > 0) setTimeout(() => { if (P.ammo === 0) cuteReload(); }, 350);
+  return true;
+}
+function cuteReload() { if (!cuteHasGun() || CUTE.reloadT > G.time || P.ammo >= CUTE.MAG || !(P.ammoRes > 0)) return false; CUTE.reloadT = G.time + 1.1; CSND.reload(); setTimeout(() => { const n = Math.min(CUTE.MAG - P.ammo, P.ammoRes); P.ammo += n; P.ammoRes -= n; }, 1050); return true; }
+function cuteGunTick(dt) {
+  const g = CUTE.gun; if (!g) return; const on = cuteHasGun() && G.hand.visible;
+  g.visible = on; if (!on) { CUTE.flash[0].visible = CUTE.flash[1].visible = false; return; }
+  if (G.hand.position.x > 0) G.hand.position.x -= 0.46; // flashlight to the left hand
+  CUTE.recoil = Math.max(0, CUTE.recoil - dt * 7); const rl = CUTE.reloadT > G.time ? Math.sin(Math.PI * (1 - (CUTE.reloadT - G.time) / 1.1)) : 0;
+  g.position.set(0.19 + (G.hand.position.x + 0.24) * 0.8, G.hand.position.y - 0.01 - rl * 0.1, -0.42 + CUTE.recoil * 0.04);
+  g.rotation.set(CUTE.recoil * 0.45 - rl * 0.9, -0.04, rl * 0.5);
+  CUTE.flashT -= dt; const f = CUTE.flashT > 0; CUTE.flash[0].visible = CUTE.flash[1].visible = f; if (f) { CUTE.flash[0].material.rotation = Math.random() * 6; flashlight.intensity = Math.max(flashlight.intensity, 3); }
+}
+function cutePartnerFlash() { const R = COOP.R; if (!R) return; const x = R.x - Math.sin(R.yaw) * 0.6, z = R.z - Math.cos(R.yaw) * 0.6; sparks(x, 1.35, z, 8, 0xffd0a0); cuteHearts(x, 1.4, z, 3); CSND.far(); }
+// ---------- UI ----------
+function cuteShowLove() { const el = $('cuteLove'); el.textContent = CUTE.love; el.classList.add('on'); clearTimeout(CUTE.loveTO); CUTE.loveTO = setTimeout(() => el.classList.remove('on'), 5200); cuteHearts(P.x - Math.sin(P.yaw) * 2, 1.7, P.z - Math.cos(P.yaw) * 2, 24); }
+function cuteHurtFX() { cuteHearts(P.x - Math.sin(P.yaw) * 0.8, 1.4, P.z - Math.cos(P.yaw) * 0.8, 14); }
+let cuteBodyOn = null, cuteGunCls = null;
+function cuteUI() {
+  const c = isCute(), play = G.state === 'play';
+  if (c !== cuteBodyOn) { document.body.classList.toggle('cute', c); cuteBodyOn = c; }
+  const gun = c && play; if (gun !== cuteGunCls) { document.body.classList.toggle('cutegun', gun); cuteGunCls = gun; $('cuteAmmo').classList.toggle('hidden', !gun); $('tbShoot').classList.toggle('hidden', !gun); $('tbReload').classList.toggle('hidden', !gun); }
+  if (gun) { const t = (P.ammo | 0) + ' / ' + (P.ammoRes | 0); if (t !== CUTE.ammoTxt || (CUTE.reloadT > G.time) !== CUTE.rlShown) { CUTE.ammoTxt = t; CUTE.rlShown = CUTE.reloadT > G.time; $('cuteAmmo').innerHTML = '🔫 ' + t + '<small>' + (CUTE.rlShown ? 'перезарядка…' : TOUCH.on ? '' : 'ЛКМ — выстрел · R — перезарядка') + '</small>'; } }
+  const lowHp = c && P.health < 30 && play ? 0.15 + 0.15 * Math.sin(G.time * 6) : 0; const hv = c ? clamp(P.hurtT * 0.7 + lowHp, 0, 0.8) : 0;
+  if (hv !== CUTE.hv) { CUTE.hv = hv; $('cuteHurt').style.opacity = hv; }
+}
+// ---------- wrappers ----------
+{
+  const _gr = gfxRender;
+  gfxRender = function () {
+    const now = performance.now(), dt = Math.min(0.05, Math.max(0, (now - CUTE.last) / 1000)); CUTE.last = now;
+    cuteHeartsTick(dt);
+    if (!isCute() || !L) { if (CUTE.gun) CUTE.gun.visible = false; cuteUI(); return _gr(); }
+    cuteGunTick(dt); cuteUI();
+    for (const m of cuteMons()) if (m.cuteDownT) { if (!cuteHost() && G.time > m.cuteGuestT) { m.cuteDownT = 0; m.cuteHp = CUTE.hp[m.kind] || 3; } else m.group.visible = false; }
+    const u = postMat.uniforms, st = GFX_LV[L.vs] || GFX_LV[0], e0 = st.exp;
+    u.grade.value.lerp(new THREE.Vector3(1.08, 0.96, 1.03), 0.55); u.grain.value *= 0.35; u.vig.value *= 0.5; u.damage.value = 0; u.chroma.value *= 0.35; u.wobble.value *= 0.4; u.staticAmt.value *= 0.35;
+    st.exp = e0 * (L.vs === 2 ? 1.6 : 1.25);
+    try { return _gr(); } finally { st.exp = e0; }
+  };
+  const _uw = updateWorld;
+  updateWorld = function (dt) {
+    _uw(dt); if (!isCute() || !L) return;
+    hemi.intensity *= 1.5; cutePickupsTick(dt);
+    if (G.state === 'play' && !(HASCO && COOP.on)) { CUTE.cpT += dt; if (CUTE.cpT > 75) { CUTE.cpT = 0; saveCheckpoint('auto'); } }
+  };
+  const _up = updatePlayer;
+  updatePlayer = function (dt) {
+    _up(dt); if (!isCute() || G.state !== 'play' || (HASCO && COOP.on && P.down)) return;
+    if (G.time - (P.lastHurt || -99) > 4) P.health = Math.min(100, P.health + dt * 3);
+    P.stamina = Math.min(100, P.stamina + dt * 9); if (P.exhausted && P.stamina > 30) P.exhausted = false;
+  };
+  const _kp = killPlayer;
+  killPlayer = function (mon, cause) {
+    if (!isCute() || !mon || G.state !== 'play' || G.godmode || CUTE.netKill || P.health <= 0) {
+      if (!isCute() || G.state !== 'play') return _kp(mon, cause);
+      const r = cuteMuted(() => _kp(mon, cause)); if (G.state === 'jumpscare') { G.flashStatic = 0; CSND.boop(); setTimeout(() => CSND.pop(), 400); } return r;
+    }
+    if ((P.cuteInv || 0) > G.time) return;
+    if (HASCO && COOP.on && P !== COOP.me) { // host: partner booped -> damage goes to the guest
+      if (P === COOP.R) { P.cuteInv = G.time + 2.5; hurtPlayer(CUTE.BOOP / DIFFS.cute.dmg, false, mon); cuteMoveFar(mon, 9); mon.grace = Math.max(mon.grace || 0, 4); }
+      return;
+    }
+    if (P.health - CUTE.BOOP <= 0) { P.health = 0; return killPlayer(mon, cause); }
+    P.cuteInv = G.time + 2.5; P.health -= CUTE.BOOP; P.hurtT = Math.min(1, P.hurtT + 0.6); P.lastHurt = G.time;
+    CSND.boop(); cuteHurtFX(); cuteHearts(mon.x, (mon.height || 2) * 0.6, mon.z, 16); pop('БУП! 💗', '#ff9fd0'); G.shake = Math.max(G.shake, 0.15);
+    if (P.hidden) { P.hidden = null; $('locker').classList.add('hidden'); }
+    cuteMoveFar(mon, 9); mon.grace = Math.max(mon.grace || 0, 4);
+  };
+  const _uj = updateJumpscare;
+  updateJumpscare = function (dt) { _uj(dt); if (!isCute() || !G.js) return; G.flashStatic = 0; G.shake = Math.min(G.shake, 0.04); camera.fov = 75 - 6 * Math.min(1, G.js.t / 0.55); camera.updateProjectionMatrix(); camera.rotation.z = 0; if (!G.js.heart && G.js.t > 0.45) { G.js.heart = true; cuteHearts(P.x - Math.sin(P.yaw) * 0.5, 1.6, P.z - Math.cos(P.yaw) * 0.5, 30, null, 1.5); } };
+  const _hp = hurtPlayer;
+  hurtPlayer = function (a, silent, src) { const h0 = P.health; const r = _hp(a, silent, src); if (isCute() && cuteLocal() && P.health < h0 - 2 && G.state === 'play') cuteHurtFX(); return r; };
+  const _sl = startLevel;
+  startLevel = function (idx, opts) {
+    const L0 = L; const r = _sl(idx, opts);
+    if (L && L !== L0 && isCute()) {
+      cuteSetupLevel(); CUTE.cpT = 0;
+      if ((opts && opts.newGame) || P.ammo == null) { P.ammo = CUTE.MAG; P.ammoRes = 12; } else { P.ammo = Math.max(P.ammo, CUTE.MAG); P.ammoRes = Math.max(P.ammoRes || 0, 6); }
+      if (!CUTE.gun) cuteBuildGun();
+      const key = (L.seed || 0) + ':' + idx; if ((opts && opts.newGame) || CUTE.lastLv !== idx) setTimeout(cuteShowLove, DEBUG.autostart ? 0 : 900); CUTE.lastLv = idx;
+    }
+    return r;
+  };
+  const _use = useInteract;
+  useInteract = function (it) {
+    if (isCute() && it && it.kind === 'redportal') { P.x = L.start.x * T; P.z = L.start.y * T; P.yaw = L.start.yaw; P.vx = P.vz = 0; AU.portal(); G.swirl = 1.2; cuteHurtFX(); pop('УПС! ОБРАТНО НА СТАРТ 💕', '#ff9fd0'); msg('В этом режиме красный портал не страшный — он просто возвращает к началу уровня.'); return; }
+    return _use(it);
+  };
+  const _pf = promptFor; promptFor = function (it) { if (isCute() && it && it.kind === 'redportal') return '[E] Красный портал (просто вернёт на старт 💕)'; return _pf(it); };
+  const _sf = startFinale; startFinale = function (resume) { const had = L && L.finale; const r = _sf(resume); if (isCute() && L && L.finale && !had) L.finale.t *= 2; return r; };
+  const _se = showEnding;
+  showEnding = function (id, cause) {
+    const r = _se(id, cause); const c = isCute(); $('ending').classList.toggle('cute', c); const old = $('cuteEndLove'); if (old) old.remove();
+    if (c && !$('ending').classList.contains('hidden')) { if (id === 'death') $('endStory').textContent = CUTE_DEATH; const d = document.createElement('div'); d.id = 'cuteEndLove'; d.textContent = CUTE.love; $('endStory').after(d); }
+    return r;
+  };
+  const _on = openNote; openNote = function (id) { const r = _on(id); if (isCute() && G.state === 'note') { stopVoice(); $('noteText').textContent = CUTE_NOTES[id % CUTE_NOTES.length]; $('note').classList.add('cutenote'); } return r; };
+  const _cn = closeNote; closeNote = function () { $('note').classList.remove('cutenote'); return _cn(); };
+  const _rl = radioLine;
+  radioLine = function () {
+    const l = _rl(); if (!isCute()) return l;
+    if (l.dir) return Object.assign({}, l, { text: 'Солнышко, ' + l.text.charAt(0).toLowerCase() + l.text.slice(1) + ' 💕' });
+    if (/Тишина/.test(l.text)) return l;
+    const m = L.monster; if (m && m.alive && m.dist < 14) return { text: 'Осторожно, котик: монстрик ' + relDir(m.x, m.z) + '. Можно сделать ему «пиу» 🔫', lie: false };
+    return { text: CUTE_RADIO[Math.random() * CUTE_RADIO.length | 0], lie: false };
+  };
+  const _sc = saveCheckpoint; saveCheckpoint = function (reason) { const r = _sc(reason); if (isCute() && SAVE.cp) { SAVE.cp.ammo = [P.ammo | 0, P.ammoRes | 0]; saveGame(); } return r; };
+  const _lc = loadCheckpoint; loadCheckpoint = function () { const a = SAVE.cp && SAVE.cp.ammo; const r = _lc(); if (r && a && isCute()) { P.ammo = a[0]; P.ammoRes = a[1]; } return r; };
+  const _da = doAction;
+  doAction = function (a) {
+    if (a === 'shoot') { cuteShoot(); return; } if (a === 'reload') { cuteReload(); return; }
+    if (a === 'radio' && isCute() && G.state === 'play' && performance.now() - CUTE.rk < 80) { CUTE.rk = 0; if (P.ammo < CUTE.MAG && P.ammoRes > 0) { cuteReload(); return; } }
+    return _da(a);
+  };
+  if (HASCO) {
+    const _om = coopOnMsg;
+    coopOnMsg = function (d) {
+      if (!d || typeof d !== 'object') return _om(d);
+      const host = COOP.role === 'host', ok = !!L && (d.ls == null || d.ls === L.seed), M = cuteMons();
+      switch (d.t) {
+        case 'cshot': if (ok) { cutePartnerFlash(); if (host && isCute()) { const o = new THREE.Vector3().fromArray(d.o), v = new THREE.Vector3().fromArray(d.d).normalize(); const h = cuteRay(o, v); if (h) cuteApplyHit(h); } } return;
+        case 'chit': if (ok && !host) { cuteHearts(d.p[0], d.p[1], d.p[2], 8); CSND.hit(); } return;
+        case 'ckill': if (ok && !host && M[d.mi]) cuteKillMon(M[d.mi], true); if (ok && !host && M[d.mi]) M[d.mi].cuteGuestT = G.time + (d.d || 75) + 6; return;
+        case 'crsp': if (ok && !host && M[d.mi]) { M[d.mi].cuteDownT = 0; M[d.mi].cuteHp = CUTE.hp[M[d.mi].kind] || 3; M[d.mi].group.visible = true; } return;
+        case 'down': CUTE.netKill = true; try { return _om(d); } finally { CUTE.netKill = false; }
+      }
+      return _om(d);
+    };
+  }
+  // input
+  addEventListener('keydown', (e) => { if (e.code === 'KeyR') CUTE.rk = performance.now(); }, true);
+  document.addEventListener('mousedown', (e) => { if (e.button === 0 && G.state === 'play' && G.locked && isCute()) cuteShoot(); });
+  // touch buttons
+  const tc = $('touch'), mk = (id, act, html, cls) => { const b = document.createElement('button'); b.className = 'tb hidden ' + (cls || ''); b.id = id; b.dataset.act = act; b.innerHTML = html; tc.appendChild(b);
+    b.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+    b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); TOUCH.lastT = performance.now(); b.classList.add('press'); unlockAudio(); doAction(act); }, { passive: false });
+    const up = () => b.classList.remove('press'); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up); b.addEventListener('contextmenu', (e) => e.preventDefault()); };
+  mk('tbShoot', 'shoot', '<span style="font-size:24px">🔫</span><small>ВЫСТРЕЛ</small>', 'big'); mk('tbReload', 'reload', '⟳', 'sm');
+  // menu / settings / co-op descriptions
+  const sd = document.createElement('style'); document.head.appendChild(sd);
+  refreshMenu();
+}
+</script><!--/CUTE-->
 </body>
 </html>

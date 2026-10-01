@@ -171,6 +171,28 @@ body.touch #finale{top:56px;font-size:18px}
  #note .paper{padding:16px 20px;font-size:14px}
  #intro h2{font-size:26px}#intro p{font-size:14px}
 }
+
+/* ---- co-op ---- */
+#coop .panel{max-width:620px;text-align:center}
+#coop .cocode{font:900 54px "Courier New",monospace;letter-spacing:.25em;color:#ffe27a;text-shadow:0 0 18px rgba(255,220,100,.6);margin:6px 0 4px;user-select:all;-webkit-user-select:all}
+#coop .copeer{color:#887;font-size:13px;margin-bottom:8px}
+#coop input{font:bold 26px "Courier New",monospace;letter-spacing:.2em;text-transform:uppercase;width:210px;text-align:center;background:#111;color:#ffe27a;border:2px solid #8a7a3a;padding:8px;user-select:text;-webkit-user-select:text;touch-action:manipulation}
+#coop .costat{margin:12px 0 4px;min-height:24px;font-size:17px;color:#cfc6a0}
+#coop .costat.err{color:#ff6a5a}
+#coop .costat.ok{color:#7f7}
+#coop .cohelp{margin-top:12px;font-size:13px;color:#887;line-height:1.45;text-align:left}
+#coop .coopts{margin:8px 0;font-size:16px}
+#coop select{font-size:16px;padding:4px}
+#coopHud{position:absolute;left:24px;bottom:118px;font-size:15px;text-shadow:1px 1px 3px #000;line-height:1.4}
+#coopHud .dn{color:#ff4a3a;font-weight:bold;animation:blink 1s steps(2) infinite}
+body.touch #coopHud{bottom:auto;top:calc(122px + env(safe-area-inset-top));left:calc(10px + env(safe-area-inset-left));font-size:11px}
+#coopDown{position:fixed;inset:0;z-index:16;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,rgba(60,0,0,.05) 25%,rgba(70,0,0,.75) 90%);text-align:center}
+#coopDown h2{font:900 clamp(26px,5vw,54px) "Courier New",monospace;color:#ff3b30;letter-spacing:.15em;text-shadow:0 0 18px #f00}
+#coopDown p{margin-top:10px;font-size:18px;color:#f3d6c8;text-shadow:0 0 6px #000;max-width:80vw}
+#coopDown .bar2{width:260px;height:10px;border:1px solid #f99;margin:12px auto 0;background:rgba(0,0,0,.5)}
+#coopDown .bar2 i{display:block;height:100%;width:0;background:#7f7}
+body.touch #coopDown p{font-size:13px}
+#tbPing{right:calc(30px + env(safe-area-inset-right));bottom:calc(214px + env(safe-area-inset-bottom))}
 </style>
 </head>
 <body>
@@ -189,6 +211,7 @@ body.touch #finale{top:56px;font-size:18px}
   <div id="prompt" class="hidden"></div>
   <div id="msgs"></div>
   <div id="finale" class="hidden"></div>
+  <div id="coopHud" class="hidden"></div>
 </div>
 <div id="subs"></div><div id="pop"></div>
 <div id="touch" class="hidden">
@@ -203,6 +226,7 @@ body.touch #finale{top:56px;font-size:18px}
   <button class="tb" id="tbRun" data-act="run"><svg viewBox="0 0 24 24"><path d="M5 6l6 6-6 6M12 6l6 6-6 6"/></svg><small>БЕГ</small></button>
   <button class="tb sm hidden" id="tbRadio" data-act="radio"><svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M8 9l9-5"/><circle cx="15" cy="14.5" r="2.5"/><path d="M7 13h3M7 16h3"/></svg></button>
   <button class="tb" id="tbCrouch" data-act="crouch"><svg viewBox="0 0 24 24"><path d="M6 8l6 6 6-6M6 14l6 6 6-6"/></svg><small>ПРИСЕСТЬ</small></button>
+  <button class="tb hidden" id="tbPing" data-act="ping"><svg viewBox="0 0 24 24"><path d="M12 3v3M5.6 5.6l2.1 2.1M18.4 5.6l-2.1 2.1"/><circle cx="12" cy="14" r="5"/><path d="M12 12v2.5"/></svg><small>ЗОВ</small></button>
 </div>
 <div id="rotate" class="overlay hidden"><div class="ph"></div><div style="font-size:20px;margin-bottom:10px">Поверните телефон горизонтально</div><div style="color:#998;font-size:14px;margin-bottom:18px">Игра рассчитана на альбомную ориентацию</div><button class="btn small" id="bRotOk">Играть так</button></div>
 <div id="toast"></div>
@@ -227,6 +251,7 @@ body.touch #finale{top:56px;font-size:18px}
   <div class="mbtns">
   <button class="btn hidden" id="bContinue">⟲ Продолжить</button>
   <button class="btn" id="bStart">▶ Новая игра</button>
+  <button class="btn" id="bCoop">👥 Кооператив (2 игрока)</button>
   <button class="btn diffbtn" id="bDiff">Сложность: <b>Нормальная</b></button>
   <button class="btn" id="bLevels">Выбор уровня</button>
   <button class="btn" id="bEndings">Концовки</button>
@@ -246,6 +271,26 @@ body.touch #finale{top:56px;font-size:18px}
   <div class="elist" id="endList"></div>
   <div class="row" id="endBtns"></div>
 </div>
+<div id="coop" class="overlay hidden"><div class="panel">
+  <h2>КООПЕРАТИВ · 2 ИГРОКА</h2>
+  <div id="coMain">
+    <p>Играйте вдвоём через интернет. Один игрок создаёт комнату и сообщает другу короткий код, второй вводит этот код.</p>
+    <button class="btn" id="coCreate" style="margin:12px auto">Создать комнату</button>
+    <div class="row" style="align-items:center"><input id="coCodeIn" maxlength="12" placeholder="КОД" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"><button class="btn small" id="coJoin">Войти по коду</button></div>
+  </div>
+  <div id="coRoom" class="hidden">
+    <div style="color:#bba">Код комнаты — продиктуйте его другу:</div>
+    <div class="cocode" id="coCode">·····</div>
+    <div class="copeer" id="coPeer"></div>
+    <button class="btn small" id="coCopy">Копировать код</button>
+    <div class="coopts" id="coHostOpts">Сложность: <button class="btn small" id="coDiff">Нормальная</button> &nbsp; Начать с: <select id="coLvl"></select></div>
+    <button class="btn" id="coStart" style="margin:10px auto" disabled>▶ Начать вместе</button>
+  </div>
+  <div class="costat" id="coStat"></div>
+  <div class="row"><button class="btn small" id="coBack">← Назад</button></div>
+  <div class="cohelp" id="coHelp"></div>
+</div></div>
+<div id="coopDown" class="hidden"><h2>ВЫ ПОВЕРЖЕНЫ</h2><p id="coopDownT"></p><div class="bar2"><i id="coopDownBar"></i></div></div>
 <div id="loading" class="overlay">ЗАГРУЗКА...</div>
 <div id="fade"></div>
 <div id="errlog"></div>
@@ -1830,7 +1875,7 @@ function updateMotes(dt) {
 }
 
 // ====================== GAME STATE ======================
-const P = { x: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, stamina: 100, health: 100, battery: 100, flashOn: false, crouch: 0, bottles: 1, hidden: null, bob: 0, stepDist: 0, hurtT: 0, exhausted: false, noise: 0, lastHurt: -99, portalCD: 0, sprinting: false };
+let P = { x: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, stamina: 100, health: 100, battery: 100, flashOn: false, crouch: 0, bottles: 1, hidden: null, bob: 0, stepDist: 0, hurtT: 0, exhausted: false, noise: 0, lastHurt: -99, portalCD: 0, sprinting: false };
 const G = { state: 'loading', time: 0, shake: 0, flashStatic: 0, swirl: 0, levelIdx: 0, loop: 0, godmode: false, fade: 0, runTime: 0, hbT: 1, showMap: true, locked: false, proj: [] };
 const keys = {};
 const $ = (id) => document.getElementById(id);
@@ -1924,8 +1969,8 @@ function startLevel(idx, opts) {
     $('intro').classList.remove('hidden'); $('intro').style.opacity = 1; clearTimeout(G.introTO); G.introTO = setTimeout(() => $('intro').classList.add('hidden'), 4200);
     setTimeout(() => msg('Найдите ' + L.cfg.item.many.toLowerCase() + ': ' + L.need + ' шт., затем ищите ВЫХОД.'), 1500);
     if (idx === 0 && !G.loop) setTimeout(() => msg('Подсказка: Улыбака двигается, только когда вы НЕ смотрите на него.'), 6000);
-    if (idx === 1) setTimeout(() => msg(TOUCH.on ? 'Подсказка: Ползун слепой и охотится на звук. Приседайте и бросайте бутылки.' : 'Подсказка: Ползун слепой и охотится на звук. Приседайте (C), бросайте бутылки (Q).'), 6000);
-    if (idx === 2) setTimeout(() => msg('Подсказка: Помеху можно заманить в портал — её выбросит далеко.'), 6000);
+    if (idx === 1) setTimeout(() => msg(TOUCH.on ? 'Подсказка: Ползун слепой и охотится на звук. Приседайте или замрите — он потеряет вас. Бутылки отвлекают.' : 'Подсказка: Ползун слепой и охотится на звук. Приседайте (C) или замрите — он потеряет вас. Бутылки (Q) отвлекают.'), 6000);
+    if (idx === 2) setTimeout(() => msg('Подсказка: Помеха видит свет фонарика. Выключите его, чтобы оторваться, а лучше заманите её в портал.'), 6000);
     if (idx === 3) setTimeout(() => msg('Подсказка: Мясная тень ломает стены. Заманите её под трещину в потолке и дёрните рычаг.'), 6000);
   }
 }
@@ -2060,8 +2105,10 @@ function updatePlayer(dt) {
   P.stepDist += moved; const stride = P.sprinting ? 2.1 : crouching ? 1.2 : 1.7;
   P.bob += moved * (Math.PI * 2 / (stride * 2));
   if (P.stepDist > stride) {
-    P.stepDist = 0; const loud = P.sprinting ? 1 : crouching ? 0.15 : 0.5; AU.step(cfg.surface, loud);
-    let r = P.sprinting ? 16 : crouching ? 2.5 : 8.5; if (cfg.surface === 'water') r *= 1.25;
+    // noise radius follows the REAL speed: crouch 2 m, slow walk (joystick half-pushed / slowed) 4.5 m, walk 8.5 m, sprint 16 m
+    const spd = Math.hypot(P.vx, P.vz), slow = !P.sprinting && !crouching && spd < 2.5;
+    P.stepDist = 0; const loud = P.sprinting ? 1 : crouching ? 0.12 : slow ? 0.28 : 0.5; AU.step(cfg.surface, loud);
+    let r = P.sprinting ? 16 : crouching ? 2 : slow ? 4.5 : 8.5; if (cfg.surface === 'water') r *= 1.25;
     P.noise = Math.max(P.noise, r / 16); emitNoise(P.x, P.z, r, 'player');
     if (cfg.surface === 'water' && Math.random() < 0.5) puff(P.x, 0.2, P.z, 2, 0x223333, 0.4, 0.5);
   }
@@ -2265,7 +2312,7 @@ function updateHUD(dt) {
   const cfg = L.cfg;
   $('obj').innerHTML = '<div class="lvl">' + cfg.name + ' — ' + cfg.title + (L.loop ? ' <span style="color:#f66">(цикл ' + L.loop + ')</span>' : '') + '</div>' + cfg.item.many + ': <b>' + L.collected + '/' + L.need + '</b>' + (L.collected >= L.need ? ' — <span style="color:#6f6">ищите ВЫХОД!</span>' : '') + '<br><span style="color:#aaa;font-size:15px">Записки: ' + SAVE.notes.length + '/8</span>';
   const nl = Math.round(P.noise * 5); const bars = '▮'.repeat(Math.min(5, nl)) + '▯'.repeat(Math.max(0, 5 - nl));
-  $('inv').innerHTML = (TOUCH.on ? 'Бутылки: <b>' : 'Бутылки [Q]: <b>') + P.bottles + '</b><br>Шум: <span style="color:' + (nl >= 4 ? '#f55' : nl >= 2 ? '#fd5' : '#8f8') + '">' + bars + '</span>' + (P.crouch > 0.5 ? '<br><span style="color:#8cf">присед</span>' : '') + (L.hasMap && !TOUCH.on ? '<br><span style="color:#aaa">[M] карта</span>' : '');
+  $('inv').innerHTML = (TOUCH.on ? 'Бутылки: <b>' : 'Бутылки [Q]: <b>') + P.bottles + '</b><br>Шум: <span style="color:' + (nl >= 4 ? '#f55' : nl >= 2 ? '#fd5' : '#8f8') + '">' + bars + '</span>' + (P.heardT > G.time ? ' <b style="color:#f33">СЛЫШИТ!</b>' : '') + (P.crouch > 0.5 ? '<br><span style="color:#8cf">присед</span>' : '') + (L.hasMap && !TOUCH.on ? '<br><span style="color:#aaa">[M] карта</span>' : '');
   const it = interactTarget(); const pr = $('prompt');
   if (P.hidden) pr.classList.add('hidden'); else if (it) { pr.textContent = TOUCH.on ? promptFor(it).replace('[E] ', '(E) ') : promptFor(it); pr.classList.remove('hidden'); pr.classList.toggle('danger', it.kind === 'redportal'); } else pr.classList.add('hidden');
   const s = Math.floor(G.runTime); $('rectime').textContent = String(Math.floor(s / 3600)).padStart(2, '0') + ':' + String(Math.floor(s / 60) % 60).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); $('rectime').textContent += ' · ' + fmtTime(G.levelTime || 0);
@@ -2296,7 +2343,7 @@ function controlsHTML() {
     monsterHelp();
 }
 function monsterHelp() {
-  return '<p style="margin-top:10px;color:#bba"><b>Монстры:</b> Улыбака замирает, пока вы на него смотрите, и боится фонарика. Ползун слепой — слышит шаги. Помеха телепортируется, гасит свет; заманите её в портал. Мясная тень ломает стены — обрушьте на неё потолок рычагом. В шкафчиках можно спрятаться от всех.</p>';
+  return '<p style="margin-top:10px;color:#bba"><b>Монстры:</b> Улыбака замирает, пока вы на него смотрите, и боится фонарика. Ползун слепой — слышит только шаги: присядьте или замрите, и он потеряет вас (шкала «Шум» показывает, насколько вас слышно). Помеха телепортируется, гасит свет и видит луч фонарика издалека — выключите фонарик, чтобы оторваться; заманите её в портал. Мясная тень ломает стены — обрушьте на неё потолок рычагом. В шкафчиках можно спрятаться от всех.</p>';
 }
 function openSub(html) { $('subPanel').innerHTML = html + '<div class="row"><button class="btn small" id="subBack">← Назад</button></div>'; $('sub').classList.remove('hidden'); $('subBack').onclick = () => { AU.click(); $('sub').classList.add('hidden'); }; }
 function setupMenus() {
@@ -2719,10 +2766,10 @@ function aiTest() {
     for (let lv = 0; lv < 4; lv++) {
       const res = [];
       for (const seed of seeds) for (const mode of (lv === 0 ? ['silent', 'walk'] : ['walk'])) {
-        G.godmode = false; startLevel(lv, { seed }); hideAll(); G.state = 'play'; const m = L.monster; m.grace = 2; P.flashOn = false; killed = null; G.time = 0;
+        G.godmode = false; startLevel(lv, { seed }); hideAll(); G.state = 'play'; const m = L.monster; m.grace = 2; P.flashOn = false; killed = null; G.time = 0; if (lv === 1) { const pth = bfsPath(L.W, L.g, Math.round(P.x / T), Math.round(P.z / T), ...m.tile()); if (pth && pth.length > 9) { const c = pth[8]; m.x = (c % L.W) * T; m.z = ((c / L.W) | 0) * T; m.path = null; } } // blind crawler: only noise within earshot (no omniscience) - start it 8 tiles away
         const t0 = G.time; let reached = null; const sx = P.x, sz = P.z; let maxStall = 0, stallT = 0, lastX = m.x, lastZ = m.z, inWall = 0;
         for (let i = 0; i < 3600 && !reached; i++) { // up to 180 s
-          G.time += 0.05; P.health = 100; P.x = sx; P.z = sz; P.vx = P.vz = 0;
+          G.time += 0.05; P.health = 100; P.x = sx; P.z = sz; P.vx = P.vz = 0; if (lv === 2) { P.flashOn = true; P.battery = 100; } // Помеха hunts by the flashlight beam
           P.yaw = Math.atan2(-(P.x - m.x), -(P.z - m.z)); P.pitch = 0; setFrustum(); // always look directly AWAY
           if (mode === 'walk' && i % 12 === 0) emitNoise(P.x, P.z, 8.5, 'player'); // footsteps of a walking player
           updateWorld(0.05);
@@ -3123,7 +3170,8 @@ function touchTest() {
   if (it) { P.x = it.x + 0.6; P.z = it.z; P.yaw = Math.atan2(0.6, 0) ; P.pitch = -0.5; updateHUDTouchNow(); const c0 = L.collected + P.bottles + P.battery; const ready = $('tbE').classList.contains('ready'); tap('tbE'); ok(ready, 'E button highlights near item'); ok(!it.active || L.collected + P.bottles + P.battery !== c0, 'E button picks up "' + (it.label || it.item) + '"'); }
   updateHUDTouchNow(); const radHidden = $('tbRadio').classList.contains('hidden'); P.radio = true; updateHUDTouchNow(); const radShown = !$('tbRadio').classList.contains('hidden'); const r0 = !!G.radioOn; tap('tbRadio'); const r1 = !!G.radioOn; tap('tbRadio'); ok(radHidden && radShown && r1 !== r0 && !!G.radioOn === r0, 'radio button hidden until found, then toggles radio'); P.radio = false; G.radioOn = false; radioStatic(false);
   tap('tbPause'); ok(G.state === 'pause', 'pause button pauses'); $('bResume').click(); ok(G.state === 'play', 'resume works without pointer lock');
-  ok(typeof toggleFullscreen === 'function' && !$('tbFull').classList.contains('hidden'), 'fullscreen button present (Fullscreen API supported=' + fsSupported() + ', iOS=' + isIOS() + ')');
+  if (IS_APP) ok($('tbFull').classList.contains('hidden'), 'app: fullscreen button hidden (native immersive mode)');
+  else ok(typeof toggleFullscreen === 'function' && !$('tbFull').classList.contains('hidden'), 'fullscreen button present (Fullscreen API supported=' + fsSupported() + ', iOS=' + isIOS() + ')');
   if (!fsSupported()) { tap('tbFull'); ok(/Домой|недоступен/.test($('toast').textContent) && $('toast').style.opacity == 1, 'no Fullscreen API -> graceful hint: "' + $('toast').textContent.slice(0, 60) + '…"'); }
   const ev = new TouchEvent('touchmove', { cancelable: true, bubbles: true, touches: [] }); document.body.dispatchEvent(ev); ok(ev.defaultPrevented, 'page scroll (touchmove) prevented');
   const cm = new MouseEvent('contextmenu', { cancelable: true, bubbles: true }); $('c').dispatchEvent(cm); ok(cm.defaultPrevented, 'long-press context menu prevented');
@@ -3158,8 +3206,1563 @@ window.androidBack = function () {
 window.androidPause = function () { try { if (G.state === 'play') pause(); stopVoice && stopVoice(); if (AU.ctx && AU.ctx.state === 'running') AU.ctx.suspend(); } catch (e) { } };
 window.androidResume = function () { try { if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume().catch(() => { }); } catch (e) { } };
 
+function appTest() {
+  const out = []; const ok = (c, m) => out.push((c ? 'PASS ' : 'FAIL ') + m);
+  ok(IS_APP, 'IS_APP detected (host=' + location.hostname + ', UA marker=' + /BackroomsApp\//.test(navigator.userAgent) + ')');
+  ok(TOUCH.on, 'touch mode on');
+  ok(!document.querySelector('link[rel=manifest]'), 'no manifest injected in app');
+  ok($('bFull').classList.contains('hidden') && $('tbFull').classList.contains('hidden'), 'fullscreen buttons hidden (native immersive mode)');
+  ok(G.state === 'menu' && androidBack() === 'exit', 'back in main menu -> exit');
+  $('bRecords').click(); ok(androidBack() === 'ok' && $('sub').classList.contains('hidden'), 'back closes a menu panel');
+  G.loop = 0; hideAll(); startLevel(0, { newGame: true }); G.state = 'play';
+  ok(androidBack() === 'ok' && G.state === 'pause', 'back during play -> pause menu');
+  ok(androidBack() === 'ok' && G.state === 'play', 'back in pause -> resume');
+  androidPause(); ok(G.state === 'pause', 'app backgrounded -> game paused');
+  resume(); G.godmode = true; showEnding('escape'); ok(androidBack() === 'ok' && G.state === 'menu', 'back on ending screen -> menu');
+  SAVE.settings.vol = SAVE.settings.vol; saveGame(); ok(!!localStorage.getItem(SAVE_KEY), 'localStorage works');
+  const gl = document.createElement('canvas').getContext('webgl'); ok(!!gl, 'WebGL available');
+  setTimeout(() => { navigator.serviceWorker && navigator.serviceWorker.getRegistrations ? navigator.serviceWorker.getRegistrations().then((r) => { ok(r.length === 0, 'no service worker registered in app (' + r.length + ')'); done(); }).catch(() => { ok(true, 'no SW API'); done(); }) : (ok(true, 'no SW API'), done()); }, 1500);
+  function done() { const el = document.createElement('pre'); el.id = 'testlog'; el.textContent = 'APPTEST\n' + out.join('\n') + '\nSUMMARY ' + out.filter((x) => x.startsWith('PASS')).length + '/' + out.length; document.body.appendChild(el); }
+}
+if (QS.has('apptest')) setTimeout(appTest, 800);
 try { boot(); } catch (e) { window.__errors.push('BOOT: ' + e.message + '\n' + e.stack); document.getElementById('errlog').textContent = window.__errors.join('\n'); throw e; }
 
 </script>
+<!--COOP--><script>
+// ====================== CO-OP: 2 players over WebRTC (PeerJS) ======================
+// Host-authoritative: the host runs monsters / level state, the guest sends its own player state and requests.
+// Everything below is inert until a co-op session starts, so single-player behaves exactly as before.
+'use strict';
+const COOP_PREFIX = 'brms-', COOP_KEY = 'backrooms_coop_v1', COOP_PROTO = 2, COOP_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const COOP_SEND_MS = 50, COOP_INTERP = 110, COOP_TIMEOUT = 12000, COOP_DOWN_T = 35, COOP_REVIVE_T = 3, COOP_COLORS = { host: 0xff8a1a, guest: 0x2ec8ff };
+const COOP = {
+  on: false, role: null, linked: false, peer: null, conn: null, code: '', diff: 'normal', lv: 0, me: P,
+  R: { x: 0, z: 0, yaw: 0, pitch: 0, eye: 1.65, flashOn: false, battery: 100, health: 100, hidden: null, down: false, js: false, inv: 0, noise: 0, crouch: 0, rv: 0, lk: -1, downT: 0, stamina: 100, sprinting: false, ready: false, bg: false },
+  rbuf: [], snaps: [], sfx: [], cap: false, capRemote: false, capBusy: false, inMon: false,
+  lastRx: 0, lastSend: 0, saveSP: null, cp: null, rvp: 0, paused: false, exitAt: -99, exitH2: -99, rDownHold: 0, wipeAt: 0, nextSeed: null, fromNet: false, aspect: 16 / 9,
+};
+const coopNow = () => performance.now();
+function coopSend(o) { const c = COOP.conn; if (!c || !c.open) return false; try { c.send(o); return true; } catch (e) { return false; } }
+const coR2 = (v) => Math.round(v * 100) / 100, coR3 = (v) => Math.round(v * 1000) / 1000;
+function coopGenCode() { let s = ''; const a = new Uint32Array(5); if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a); else for (let i = 0; i < 5; i++) a[i] = Math.random() * 1e9; for (let i = 0; i < 5; i++) s += COOP_CHARS[a[i] % COOP_CHARS.length]; return s; }
+function coopNormCode(raw) {
+  const cyr = { 'А': 'A', 'В': 'B', 'Е': 'E', 'К': 'K', 'М': 'M', 'Н': 'H', 'О': 'O', 'Р': 'P', 'С': 'C', 'Т': 'T', 'Х': 'X', 'У': 'Y', 'З': '3' };
+  let s = String(raw || '').trim().toUpperCase().replace(/[А-ЯЁ]/g, (c) => cyr[c] || c);
+  if (/^BRMS-?[A-Z0-9]{5}/.test(s)) s = s.replace(/^BRMS-?/, ''); // pasted full room id
+  return s.replace(/[^A-Z0-9]/g, '');
+}
+function coopPeerOpts() {
+  const o = { debug: QS.has('netdebug') ? 2 : 0 };
+  const srv = QS.get('peerserver'); // test only: ?peerserver=host:port (local peerjs-server)
+  if (srv) { const [h, pt] = srv.split(':'); Object.assign(o, { host: h, port: +pt || 9000, path: '/', secure: false, key: 'peerjs' }); }
+  // ICE: public STUN + the free PeerJS TURN relay (UDP and TCP, for networks that block UDP)
+  const ice = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+    { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478', 'turn:eu-0.turn.peerjs.com:3478?transport=tcp', 'turn:us-0.turn.peerjs.com:3478?transport=tcp'], username: 'peerjs', credential: 'peerjsp' }];
+  const turn = QS.get('turn'); // test only: ?turn=host:port (local TURN relay, user/pass test/test)
+  if (turn) ice.unshift({ urls: 'turn:' + turn, username: QS.get('turnuser') || 'test', credential: QS.get('turnpass') || 'test' });
+  o.config = { iceServers: ice, sdpSemantics: 'unified-plan' };
+  return o;
+}
+function coopLoadPeer() {
+  return new Promise((res, rej) => {
+    if (window.Peer) return res();
+    const s = document.createElement('script'); s.src = 'peerjs.min.js';
+    s.onload = () => (window.Peer ? res() : rej(new Error('Peer missing'))); s.onerror = () => rej(new Error('load failed'));
+    document.head.appendChild(s);
+  });
+}
+// ---------------- lobby UI ----------------
+function coStat(t, cls) { const el = $('coStat'); el.textContent = t; el.className = 'costat' + (cls ? ' ' + cls : ''); }
+function coopOpenLobby() {
+  AU.init(); hideAll(); $('coop').classList.remove('hidden'); $('menu').classList.add('hidden');
+  if (COOP.peer) coopLeave(true);
+  coopShowLobbyMain(); coStat(''); $('coHelp').innerHTML = coopHelpHTML();
+}
+function coopHelpHTML() {
+  const E = TOUCH.on ? 'кнопку E' : '<b>E</b>';
+  return '<b>Как играть вдвоём:</b><br>• Нужен интернет у обоих. Хост выбирает сложность и уровень.<br>• Лабиринт и монстры общие. Монстры охотятся на ближайшего / самого шумного.<br>• Пойманный игрок «повержен»: напарник может поднять его, удерживая ' + E + ' рядом ~3 сек. Если повержены оба — возврат к контрольной точке.<br>• К ВЫХОДУ нужно прийти вдвоём. ' + (TOUCH.on ? 'Кнопка «ЗОВ»' : '<b>G</b>') + ' — позвать напарника (метка и звук; монстры тоже слышат!).<br>• Кооператив не трогает одиночные сохранения; рекорды хранятся отдельно.';
+}
+function coopShowLobbyMain() { $('coMain').classList.remove('hidden'); $('coRoom').classList.add('hidden'); }
+function coopFillLvl() {
+  let lv = [0]; try { const s = JSON.parse(localStorage.getItem(COOP_KEY) || '{}'); if (s && Array.isArray(s.levels)) lv = s.levels; } catch (e) { }
+  const sel = $('coLvl'); sel.innerHTML = LEVELS.map((l, i) => '<option value="' + i + '"' + (lv.includes(i) ? '' : ' disabled') + '>' + (lv.includes(i) ? '' : '🔒 ') + l.name + ' — ' + l.title + '</option>').join('');
+  sel.value = String(lv.includes(COOP.lv) ? COOP.lv : 0); COOP.lv = +sel.value;
+  $('coDiff').textContent = (DIFFS[COOP.diff] || DIFFS.normal).name;
+}
+function coopLobbyInfo() { coopSend({ t: 'lobby', diff: COOP.diff, lv: +$('coLvl').value || 0 }); }
+async function coopHost() {
+  coopLeave(true); COOP.role = 'host'; COOP.diff = SAVE.settings.diff || 'normal';
+  $('coMain').classList.add('hidden'); $('coRoom').classList.remove('hidden'); $('coStart').disabled = true;
+  $('coCode').textContent = '·····'; $('coPeer').textContent = ''; coopFillLvl(); coStat('Подключение к серверу…');
+  try { await coopLoadPeer(); } catch (e) { coStat('Не удалось загрузить сетевой модуль (peerjs.min.js). Обновите страницу.', 'err'); return; }
+  if (COOP.role !== 'host') return;
+  let tries = 0;
+  const attempt = () => {
+    const code = coopGenCode(); let peer;
+    try { peer = new Peer(COOP_PREFIX + code, coopPeerOpts()); } catch (e) { coStat('Ваш браузер не поддерживает WebRTC — кооператив недоступен.', 'err'); return; }
+    COOP.peer = peer; COOP.code = code;
+    peer.on('open', () => {
+      if (COOP.peer !== peer) return; $('coCode').textContent = code; $('coPeer').textContent = 'ID комнаты: ' + COOP_PREFIX + code; coStat('Ждём напарника…');
+      clearInterval(COOP.waitT); COOP.waitT = setInterval(() => { if (!COOP.linked && COOP.peer === peer && !COOP.on && !$('coStat').classList.contains('err')) coStat('Ждём напарника' + '.'.repeat(1 + Math.floor(Date.now() / 600) % 3)); }, 600);
+    });
+    peer.on('connection', (c) => coopIncoming(c));
+    peer.on('error', (e) => { if (COOP.peer !== peer) return; if (e.type === 'unavailable-id' && tries++ < 6) { try { peer.destroy(); } catch (er) { } attempt(); return; } coopPeerError(e); });
+    peer.on('disconnected', () => { if (COOP.peer === peer && !peer.destroyed) setTimeout(() => { try { if (COOP.peer === peer && !peer.destroyed && peer.disconnected) peer.reconnect(); } catch (er) { } }, 1500); });
+  };
+  attempt();
+}
+async function coopJoin() {
+  const code = coopNormCode($('coCodeIn').value);
+  if (!/^[A-Z0-9]{5}$/.test(code)) { coStat('Код — это 5 символов (латинские буквы и цифры), например K7M2Q.', 'err'); return; }
+  coopLeave(true); COOP.role = 'guest'; COOP.code = code; coStat('Подключение к комнате ' + code + '…');
+  try { await coopLoadPeer(); } catch (e) { coStat('Не удалось загрузить сетевой модуль (peerjs.min.js). Обновите страницу.', 'err'); return; }
+  if (COOP.role !== 'guest') return;
+  let peer; try { peer = new Peer(coopPeerOpts()); } catch (e) { coStat('Ваш браузер не поддерживает WebRTC — кооператив недоступен.', 'err'); return; }
+  COOP.peer = peer;
+  peer.on('open', () => {
+    if (COOP.peer !== peer) return; coStat('Сервер найден. Соединяемся с комнатой ' + code + '…');
+    const c = peer.connect(COOP_PREFIX + code, { reliable: true, serialization: 'json' }); coopBind(c);
+    clearTimeout(COOP.joinTO); COOP.joinTO = setTimeout(() => { if (COOP.peer === peer && !COOP.linked) { coStat('Не удалось соединиться с комнатой ' + code + '. Возможно, сеть блокирует прямое соединение (строгий NAT / мобильный интернет). Попробуйте Wi-Fi или другую сеть.', 'err'); coopLeave(true); } }, 25000);
+  });
+  peer.on('error', (e) => { if (COOP.peer === peer) coopPeerError(e); });
+}
+function coopPeerError(e) {
+  const t = e && e.type; const sig = t === 'network' || t === 'server-error' || t === 'socket-error' || t === 'socket-closed' || t === 'disconnected';
+  if (COOP.linked && COOP.conn && COOP.conn.open && sig) return; // signaling lost, the P2P link itself is fine
+  const txt = t === 'peer-unavailable' ? 'Комната «' + COOP.code + '» не найдена. Проверьте код — или друг ещё не создал комнату / уже закрыл её.'
+    : t === 'browser-incompatible' ? 'Ваш браузер не поддерживает WebRTC — кооператив недоступен.'
+      : sig ? 'Нет связи с сервером соединения. Проверьте интернет и попробуйте ещё раз.'
+        : t === 'webrtc' ? 'Не удалось установить прямое соединение (строгий NAT / мобильная сеть). Попробуйте другую сеть.'
+          : 'Ошибка сети' + (t ? ' (' + t + ')' : '') + '. Попробуйте ещё раз.';
+  if (COOP.on) { if (COOP.role === 'host' && sig) return; msg(txt); return; }
+  clearTimeout(COOP.joinTO); coStat(txt, 'err');
+  const role = COOP.role; coopLeave(true); if (role === 'host') coopShowLobbyMain();
+}
+function coopIncoming(c) {
+  if (COOP.conn && COOP.conn.open) { c.on('open', () => { try { c.send({ t: 'full' }); } catch (e) { } setTimeout(() => { try { c.close(); } catch (e) { } }, 600); }); return; }
+  coopBind(c);
+}
+function coopBind(c) {
+  c.on('open', () => {
+    if (COOP.conn && COOP.conn !== c && COOP.conn.open) { try { c.close(); } catch (e) { } return; }
+    COOP.conn = c; COOP.lastRx = coopNow(); clearTimeout(COOP.joinTO);
+    coopSend({ t: 'hello', v: COOP_PROTO, role: COOP.role, aspect: coR2(innerWidth / Math.max(1, innerHeight)) });
+    try { const pc = c.peerConnection; if (pc) pc.addEventListener('iceconnectionstatechange', () => { if (pc.iceConnectionState === 'failed' && COOP.conn === c) coopPartnerGone('lost'); }); } catch (e) { }
+  });
+  c.on('data', (d) => { if (COOP.conn === c) { COOP.lastRx = coopNow(); try { coopOnMsg(d); } catch (e) { console.warn('coop msg', d && d.t, e); } } });
+  c.on('close', () => { if (COOP.conn === c) coopPartnerGone('close'); });
+  c.on('error', () => { if (COOP.conn === c && !c.open) coopPartnerGone('lost'); });
+}
+function coopLeave(silent) {
+  clearTimeout(COOP.joinTO); clearInterval(COOP.waitT);
+  if (COOP.conn) { const c = COOP.conn; COOP.conn = null; try { if (c.open) c.send({ t: 'bye' }); } catch (e) { } setTimeout(() => { try { c.close(); } catch (e) { } }, 150); }
+  if (COOP.peer) { const p = COOP.peer; COOP.peer = null; setTimeout(() => { try { p.destroy(); } catch (e) { } }, 250); }
+  COOP.linked = false; COOP.R.ready = false;
+  if (!silent) coStat('');
+}
+// ---------------- save context: co-op never touches single-player progress ----------------
+function coopEnterSave() {
+  if (COOP.saveSP) return; COOP.saveSP = SAVE; let s = {};
+  try { s = JSON.parse(localStorage.getItem(COOP_KEY) || '{}') || {}; } catch (e) { s = {}; }
+  SAVE = Object.assign({ levels: [0], endings: {}, notes: [], loops: 0, records: {} }, s); SAVE.records = SAVE.records || {}; SAVE.settings = COOP.saveSP.settings; delete SAVE.cp;
+}
+function coopExitSave() { if (!COOP.saveSP) return; SAVE = COOP.saveSP; COOP.saveSP = null; }
+{
+  const _sg = saveGame;
+  saveGame = function () {
+    if (!COOP.saveSP) return _sg();
+    try { const o = Object.assign({}, SAVE); delete o.settings; delete o.cp; localStorage.setItem(COOP_KEY, JSON.stringify(o)); } catch (e) { }
+    const cur = SAVE; SAVE = COOP.saveSP; try { _sg(); } finally { SAVE = cur; } // settings (volume, sensitivity…) still persist
+  };
+  const _dc = diffCfg; diffCfg = function () { return COOP.on ? (DIFFS[COOP.diff] || DIFFS.normal) : _dc(); };
+  const _rk = recKey; recKey = function (k) { return COOP.on ? (COOP.diff || 'normal') + ':' + k : _rk(k); };
+  const _sc = saveCheckpoint;
+  saveCheckpoint = function (reason) {
+    if (!COOP.on) return _sc(reason);
+    if (!L) return; COOP.cp = { x: P.x, z: P.z, yaw: P.yaw };
+    if (reason !== 'start') { const el = $('cpbar'); if (el) { el.textContent = '✔ Контрольная точка'; el.style.opacity = 1; clearTimeout(el._t); el._t = setTimeout(() => { el.style.opacity = 0; }, 2200); } }
+  };
+  const _lc = loadCheckpoint; loadCheckpoint = function () { if (COOP.on) return false; return _lc(); };
+  const _rh = recordsHTML;
+  recordsHTML = function () {
+    let h = _rh(); let rec = {};
+    try { rec = (JSON.parse(localStorage.getItem(COOP_KEY) || '{}') || {}).records || {}; } catch (e) { }
+    if (COOP.on) rec = SAVE.records || rec;
+    const ds = ['easy', 'normal', 'nightmare']; const cell = (d, k) => '<td>' + (rec[d + ':' + k] ? fmtTime(rec[d + ':' + k]) : '—') + '</td>';
+    h += '<h2 style="margin-top:18px">РЕКОРДЫ · КООПЕРАТИВ</h2><table><tr><td></td>' + ds.map((d) => '<td style="color:#ffd85a">' + DIFFS[d].name + '</td>').join('') + '</tr>';
+    LEVELS.forEach((lv, i) => { h += '<tr><td>' + lv.name + '</td>' + ds.map((d) => cell(d, 'L' + i)).join('') + '</tr>'; });
+    h += '<tr><td>Вся игра → «Побег»</td>' + ds.map((d) => cell(d, 'full_escape')).join('') + '</tr><tr><td>Вся игра → «Истинный выход»</td>' + ds.map((d) => cell(d, 'full_true')).join('') + '</tr></table>';
+    return h;
+  };
+}
+// ---------------- remote player avatar ----------------
+function coopTagTex(text, color, sub) {
+  return canvasTex(256, 64, (g, w, h) => { g.clearRect(0, 0, w, h); g.font = 'bold 30px "Courier New",monospace'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,0.85)'; g.strokeText(text, w / 2, sub ? 22 : h / 2); g.fillStyle = color; g.fillText(text, w / 2, sub ? 22 : h / 2); if (sub) { g.font = 'bold 20px "Courier New",monospace'; g.strokeText(sub, w / 2, 50); g.fillStyle = '#fff'; g.fillText(sub, w / 2, 50); } }, false);
+}
+function coopBuildAvatar(color) {
+  const D = []; const d = (o) => { D.push(o); return o; };
+  const root = new THREE.Group(); root.visible = false; scene.add(root);
+  const body = new THREE.Group(); root.add(body);
+  const suit = d(new THREE.MeshLambertMaterial({ color, emissive: color, emissiveIntensity: 0.18 }));
+  const dark = d(new THREE.MeshLambertMaterial({ color: 0x23211d, emissive: 0x050505 }));
+  const strip = d(new THREE.MeshBasicMaterial({ color: 0xf4f4e8 }));
+  const visor = d(new THREE.MeshBasicMaterial({ color: 0x9fe8ff }));
+  const add = (p, geo, mat, x, y, z) => { const m = new THREE.Mesh(d(geo), mat); m.position.set(x || 0, y || 0, z || 0); p.add(m); return m; };
+  const hips = new THREE.Group(); hips.position.y = 0.92; body.add(hips);
+  const legs = [];
+  for (const s of [-1, 1]) {
+    const hip = new THREE.Group(); hip.position.set(s * 0.11, 0, 0); hips.add(hip);
+    add(hip, new THREE.BoxGeometry(0.15, 0.46, 0.17), suit, 0, -0.23, 0);
+    const knee = new THREE.Group(); knee.position.set(0, -0.46, 0); hip.add(knee);
+    add(knee, new THREE.BoxGeometry(0.13, 0.42, 0.15), suit, 0, -0.21, 0);
+    add(knee, new THREE.BoxGeometry(0.135, 0.04, 0.155), strip, 0, -0.12, 0);
+    add(knee, new THREE.BoxGeometry(0.15, 0.08, 0.26), dark, 0, -0.43, -0.05);
+    legs.push({ hip, knee });
+  }
+  const torso = new THREE.Group(); hips.add(torso);
+  add(torso, new THREE.BoxGeometry(0.4, 0.56, 0.24), suit, 0, 0.3, 0);
+  add(torso, new THREE.BoxGeometry(0.405, 0.05, 0.245), strip, 0, 0.18, 0);
+  add(torso, new THREE.BoxGeometry(0.405, 0.05, 0.245), strip, 0, 0.42, 0);
+  add(torso, new THREE.BoxGeometry(0.3, 0.38, 0.14), dark, 0, 0.32, 0.18); // backpack
+  add(torso, new THREE.BoxGeometry(0.06, 0.1, 0.02), d(new THREE.MeshBasicMaterial({ color: 0xff2020 })), 0.1, 0.45, 0.255);
+  const head = new THREE.Group(); head.position.set(0, 0.66, 0); torso.add(head);
+  add(head, new THREE.SphereGeometry(0.15, 14, 10), suit).scale.set(1, 1.1, 1.05);
+  const vz = add(head, new THREE.SphereGeometry(0.115, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.5), visor, 0, 0.0, -0.06); vz.rotation.x = -Math.PI / 2; vz.scale.set(1.05, 1, 0.8);
+  add(head, new THREE.BoxGeometry(0.06, 0.04, 0.05), d(new THREE.MeshBasicMaterial({ color: 0xffffee })), 0, 0.12, -0.13);
+  const arms = [];
+  for (const s of [-1, 1]) {
+    const sh = new THREE.Group(); sh.position.set(s * 0.26, 0.54, 0); torso.add(sh);
+    add(sh, new THREE.BoxGeometry(0.11, 0.34, 0.12), suit, 0, -0.17, 0);
+    const el = new THREE.Group(); el.position.set(0, -0.34, 0); sh.add(el);
+    add(el, new THREE.BoxGeometry(0.1, 0.3, 0.11), suit, 0, -0.15, 0);
+    add(el, new THREE.BoxGeometry(0.105, 0.04, 0.115), strip, 0, -0.08, 0);
+    add(el, new THREE.BoxGeometry(0.09, 0.09, 0.09), dark, 0, -0.33, 0);
+    arms.push({ sh, el, s });
+  }
+  const fl = new THREE.Group(); fl.position.set(0, -0.36, -0.02); arms[1].el.add(fl);
+  add(fl, new THREE.CylinderGeometry(0.03, 0.025, 0.2, 8), dark).rotation.x = Math.PI / 2;
+  const lens = add(fl, new THREE.CircleGeometry(0.034, 10), d(new THREE.MeshBasicMaterial({ color: 0x333333 })), 0, 0, -0.105); lens.rotation.y = Math.PI;
+  const beamTex = d(canvasTex(4, 64, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#fff'); gr.addColorStop(0.35, '#999'); gr.addColorStop(1, '#000'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }, false));
+  const bg = new THREE.ConeGeometry(1.25, 6.5, 18, 1, true); bg.translate(0, -3.25, 0); bg.rotateX(Math.PI / 2); d(bg);
+  const beamMat = d(new THREE.MeshBasicMaterial({ color: 0xfff1c8, alphaMap: beamTex, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: true }));
+  const beamPivot = new THREE.Group(); root.add(beamPivot);
+  const beam = new THREE.Mesh(bg, beamMat); beam.frustumCulled = false; beamPivot.add(beam);
+  const lensGlow = new THREE.Sprite(d(new THREE.SpriteMaterial({ map: GLOW_TEX, color: 0xfff2c0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.9 }))); lensGlow.scale.set(0.5, 0.5, 1); beamPivot.add(lensGlow);
+  const spot = new THREE.SpotLight(0xfff0d8, 0, 24, 0.46, 0.5, 1.2); beamPivot.add(spot); spot.target.position.set(0, 0, -5); beamPivot.add(spot.target);
+  const tagMat = d(new THREE.SpriteMaterial({ map: d(coopTagTex('НАПАРНИК', '#' + new THREE.Color(color).getHexString())), transparent: true, depthWrite: false, fog: false }));
+  const tag = new THREE.Sprite(tagMat); tag.scale.set(1.0, 0.25, 1); tag.position.y = 2.05; root.add(tag);
+  const mkMat = d(new THREE.SpriteMaterial({ map: d(coopTagTex('✚ ПОВЕРЖЕН', '#ff4a3a', TOUCH.on ? 'поднимите (E)' : 'поднимите [E]')), transparent: true, depthWrite: false, depthTest: false, fog: false }));
+  const marker = new THREE.Sprite(mkMat); marker.scale.set(1.6, 0.4, 1); marker.renderOrder = 999; marker.visible = false; scene.add(marker);
+  return { root, body, hips, torso, head, legs, arms, fl, lens, beam, beamMat, beamPivot, lensGlow, spot, tag, marker, D, color, ph: 0, lastX: null, lastZ: null, spd: 0, stepAcc: 0 };
+}
+function coopDisposeAvatar() { const av = COOP.av; if (!av) return; scene.remove(av.root); scene.remove(av.marker); av.D.forEach((o) => { try { o.dispose(); } catch (e) { } }); COOP.av = null; }
+function coopClearPing() { if (!COOP.pingSp) return; scene.remove(COOP.pingSp); COOP.pingSp.material.map.dispose(); COOP.pingSp.material.dispose(); COOP.pingSp = null; }
+function coopPingMarker(x, z, text) {
+  coopClearPing();
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: coopTagTex('‼ ' + text, '#ffe27a'), transparent: true, depthWrite: false, depthTest: false, fog: false }));
+  sp.scale.set(1.6, 0.4, 1); sp.renderOrder = 998; sp.position.set(x, 2.3, z); scene.add(sp); COOP.pingSp = sp; COOP.pingT = 6;
+}
+// interpolation buffers
+function coopBufPush(buf, s) { s.t = coopNow(); buf.push(s); while (buf.length > 40) buf.shift(); }
+function coopBufAt(buf, t) {
+  if (!buf.length) return null; if (buf.length === 1 || t <= buf[0].t) return [buf[0], buf[0], 0];
+  for (let i = buf.length - 1; i > 0; i--) { const a = buf[i - 1], b = buf[i]; if (t >= a.t) { if (t >= b.t) return [b, b, 0]; return [a, b, (t - a.t) / Math.max(1, b.t - a.t)]; } }
+  return [buf[0], buf[0], 0];
+}
+function coopEncP() {
+  const lk = P.hidden && L ? L.inter.indexOf(P.hidden) : -1;
+  const fl = (P.flashOn ? 1 : 0) | (P.hidden ? 2 : 0) | (P.down ? 4 : 0) | ((P.inv || 0) > 0 ? 8 : 0) | (P.sprinting ? 16 : 0) | (G.state === 'jumpscare' ? 32 : 0) | (document.hidden ? 64 : 0);
+  const eye = P.down ? 0.35 : P.hidden ? 1.55 : lerp(1.65, 1.0, P.crouch);
+  return [coR2(P.x), coR2(P.z), coR3(P.yaw), coR3(P.pitch), coR2(eye), fl, coR2(P.noise || 0), Math.round(P.health), coR2(COOP.rvp), lk, Math.round(P.down && P.downT != null ? P.downT : 0), Math.round(P.battery)];
+}
+function coopDecP(a) {
+  const R = COOP.R; const fl = a[5];
+  R.x = a[0]; R.z = a[1]; R.yaw = a[2]; R.pitch = a[3]; R.eye = a[4]; R.flashOn = !!(fl & 1); R.down = !!(fl & 4) || coopNow() < COOP.rDownHold; R.js = !!(fl & 32);
+  R.inv = (fl & 8) ? 1 : 0; R.sprinting = !!(fl & 16); R.noise = a[6]; R.health = a[7]; R.rv = a[8]; R.lk = a[9]; R.downT = a[10]; R.battery = a[11] != null ? a[11] : 100; R.bg = !!(fl & 64);
+  R.hidden = (fl & 2) ? ((L && L.inter[a[9]]) || true) : null; R.crouch = clamp((1.65 - R.eye) / 0.65, 0, 1); R.ready = true;
+  coopBufPush(COOP.rbuf, { x: a[0], z: a[1], yaw: a[2], pitch: a[3], eye: a[4], fl });
+}
+// ---------------- host: monsters hunt the nearest / noisiest player ----------------
+const CO_STATES = ['patrol', 'hunt', 'chase', 'lost', 'investigate', 'dead', 'stalk', 'ambush', 'flee'];
+const CO_IDLES = [null, 'wait', 'grace', 'stun', 'frozen', 'search', 'arrived', 'smash', 'stuck', 'ambush'];
+const CO_KILLR = { smiler: 1.2, crawler: 1.25, glitch: 1.0, flesh: 1.75 };
+const CO_RCAM = new THREE.PerspectiveCamera(75, 16 / 9, 0.05, 140); CO_RCAM.rotation.order = 'YXZ';
+const CO_RFR = new THREE.Frustum(), _coM = new THREE.Matrix4();
+const CO_GHOST = { x: 0, z: 0, yaw: 0, pitch: 0, hidden: true, flashOn: false, battery: 0, noise: 0, health: 100, crouch: 0, stamina: 100, vx: 0, vz: 0 };
+const coLinkedGuest = () => COOP.on && COOP.role === 'guest' && COOP.linked;
+const coLinkedHost = () => COOP.on && COOP.role === 'host' && COOP.linked;
+function coRemoteOK() { const R = COOP.R; return COOP.linked && R.ready && !R.down && !R.inv && !R.js && !R.bg && COOP.rls === (L && L.seed); }
+function coLocalOK() { const me = COOP.me; return !me.down && !((me.inv || 0) > 0) && G.state !== 'jumpscare' && G.state !== 'ending' && !G.godmode; }
+function coopUpdRemoteCam() {
+  const R = COOP.R; if (Math.abs(CO_RCAM.aspect - COOP.aspect) > 0.01) { CO_RCAM.aspect = COOP.aspect; CO_RCAM.updateProjectionMatrix(); }
+  CO_RCAM.position.set(R.x, R.eye, R.z); CO_RCAM.rotation.set(R.pitch, R.yaw, 0); CO_RCAM.updateMatrixWorld();
+  _coM.multiplyMatrices(CO_RCAM.projectionMatrix, CO_RCAM.matrixWorldInverse); CO_RFR.setFromProjectionMatrix(_coM);
+}
+function coopViewSees(m, px, pz, fr) {
+  _sph.center.set(m.x, m.height * 0.55, m.z); _sph.radius = m.radius;
+  if (!fr.intersectsSphere(_sph)) return false; if (Math.hypot(m.x - px, m.z - pz) > 40) return false;
+  const ox = -(m.z - pz), oz = (m.x - px), n = Math.hypot(ox, oz) || 1, o = 0.3;
+  return losClear(px, pz, m.x, m.z) || losClear(px, pz, m.x + ox / n * o, m.z + oz / n * o) || losClear(px, pz, m.x - ox / n * o, m.z - oz / n * o);
+}
+{ // Smiler freezes while EITHER player looks at it
+  const _os = Smiler.prototype.onScreen;
+  Smiler.prototype.onScreen = function () {
+    if (!(COOP.on && COOP.role === 'host' && COOP.linked)) return _os.call(this);
+    const me = COOP.me, R = COOP.R;
+    if (!me.down && G.state !== 'jumpscare' && coopViewSees(this, me.x, me.z, FRUSTUM)) return true;
+    if (R.ready && !R.down && !R.js && !R.bg && COOP.rls === L.seed && coopViewSees(this, R.x, R.z, CO_RFR)) return true;
+    return false;
+  };
+}
+function coopScore(m, p) { return Math.hypot(p.x - m.x, p.z - m.z) * (p.hidden ? 3 : 1) / (1 + 0.6 * (p.noise || 0)); }
+function coopPickTarget(m) {
+  const me = COOP.me, R = COOP.R, a = coLocalOK(), b = coRemoteOK();
+  if (a && !b) return me; if (b && !a) return R;
+  if (!a && !b) { CO_GHOST.x = me.x; CO_GHOST.z = me.z; return CO_GHOST; }
+  const sm = coopScore(m, me), sr = coopScore(m, R); const cur = m.coT === R ? R : me;
+  let t = cur; if (cur === me && sr < sm * 0.75) t = R; else if (cur === R && sm < sr * 0.75) t = me;
+  m.coT = t; return t;
+}
+function coopAs(target, fn) { // run monster code as if `target` were the player
+  const sP = P, sCam = camera, st = G.state, sh = G.shake, fs = G.flashStatic, sw = G.swirl;
+  const remote = target !== COOP.me;
+  if (remote) { P = target; if (target === COOP.R) camera = CO_RCAM; }
+  COOP.tgt = target === COOP.me ? 'me' : target === COOP.R ? 'remote' : 'ghost'; COOP.cap = true;
+  const allow = st === 'play' || st === 'note' || (remote && st === 'jumpscare');
+  if (allow) G.state = 'play';
+  try { fn(); } finally {
+    P = sP; camera = sCam; COOP.cap = false; COOP.tgt = 'me';
+    if (G.state === 'play' && allow) G.state = st;
+    if (remote) { G.shake = sh; G.flashStatic = fs; G.swirl = sw; }
+  }
+}
+function coopHostMonUpdate(dt) {
+  const m = this, proto = Object.getPrototypeOf(m);
+  if (G.state === 'jumpscare' && G.js && G.js.mon === m) return; // local jumpscare animates it
+  const t = coopPickTarget(m); COOP.inMon = true;
+  try {
+    coopAs(t, () => proto.update.call(m, dt));
+    // the player who is NOT the current target still gets caught on contact
+    const o = t === COOP.me ? (coRemoteOK() ? COOP.R : null) : t === COOP.R ? (coLocalOK() ? COOP.me : null) : null;
+    if (o && m.alive && (!m.canTouch || m.canTouch()) && !(m.grace > 0) && !(m.stun > 0) && !o.hidden && Math.hypot(o.x - m.x, o.z - m.z) < (m.killR || CO_KILLR[m.kind] || 1.2)) coopAs(o, () => { if (G.state === 'play') killPlayer(m); });
+  } finally { COOP.inMon = false; }
+  m.dist = Math.hypot(COOP.me.x - m.x, COOP.me.z - m.z);
+}
+function coopEncMon(m) {
+  const fl = (m.stun > 0 ? 1 : 0) | (!m.alive ? 2 : 0) | (m.grace > 0 ? 4 : 0) | (m.group.visible ? 8 : 0) | (m.smash > 0 ? 16 : 0);
+  const ex = m.netExtra ? m.netExtra() : 0;
+  return [coR2(m.x), coR2(m.z), coR3(m.yaw), Math.max(0, CO_STATES.indexOf(m.state)), Math.max(0, CO_IDLES.indexOf(m.idle || m.lastIdle || null)), fl, coR2(m.moving || 0), m.climbTarget || 0, ex];
+}
+// ---------------- guest: monsters are puppets driven by host snapshots ----------------
+function coopPuppetize() {
+  for (const m of (L.monsters || [L.monster])) {
+    if (!m || m.coPup) continue; m.coPup = true; m.nbuf = []; m.update = coopPuppetUpdate; m.crush = function () { }; m.hear = function () { };
+    m.group.visible = false; m.grace = 1;
+  }
+  L.blackoutT = 1e9; if (L.shift) { L.coShift = L.shift; L.shift = null; }
+}
+function coopUnpuppet() {
+  if (!L) return;
+  for (const m of (L.monsters || [L.monster])) { if (!m || !m.coPup) continue; delete m.update; delete m.crush; delete m.hear; m.coPup = false; m.path = null; m.repath = 0; m.grace = Math.max(m.grace || 0, 3); if (m.alive) m.group.visible = true; if (m.state === 'dead' && m.alive) m.state = 'patrol'; }
+  L.blackoutT = 12; if (L.coShift) { L.shift = L.coShift; L.coShift = null; }
+}
+function coopPuppetUpdate(dt) {
+  const m = this; m.t += dt;
+  if (G.state === 'jumpscare' && G.js && G.js.mon === m) return;
+  const s = coopBufAt(m.nbuf, coopNow() - COOP_INTERP);
+  if (!s) { m.group.visible = false; return; }
+  let [a, b, k] = s; if (Math.hypot(b.x - a.x, b.z - a.z) > 4) { a = b; k = 0; }
+  m.x = lerp(a.x, b.x, k); m.z = lerp(a.z, b.z, k); m.yaw = lerpAngle(a.yaw, b.yaw, k);
+  m.state = CO_STATES[b.st] || 'patrol'; m.idle = CO_IDLES[b.id] || null; m.lastIdle = m.idle;
+  m.stun = (b.fl & 1) ? 1 : 0; m.grace = (b.fl & 4) ? 1 : 0; m.smash = (b.fl & 16) ? 1 : 0; m.moving = lerp(a.mv, b.mv, k); m.climbTarget = b.ct || 0;
+  const wasAlive = m.alive; m.alive = !(b.fl & 2);
+  if (wasAlive && !m.alive && m.kind === 'flesh') { m.state = 'dead'; msg('Мясная тень раздавлена обвалом!'); }
+  m.dist = Math.hypot(P.x - m.x, P.z - m.z);
+  if (m.applyNetExtra) m.applyNetExtra(b.ex, dt);
+  if (m.puppetAnim) { m.puppetAnim(dt, b); return; }
+  if (m.kind === 'smiler') { const frozen = m.moving < 0.05; if (frozen && !m.coFrozen) m.randomPose(); m.coFrozen = frozen; m.animate(dt, frozen); m.sync(); m.group.visible = true; }
+  else if (m.kind === 'crawler') { m.animateBody(dt); m.sync2(dt); m.group.visible = true; }
+  else if (m.kind === 'glitch') { m.animate(); m.sync(); if (m.stun > 0) m.group.visible = Math.random() < 0.3; }
+  else { if (!m.alive) { m.deadT = (m.deadT || 0) + dt; const sc = Math.max(0.15, 1 - m.deadT * 0.8); m.group.scale.set(1 + (1 - sc) * 0.6, sc, 1 + (1 - sc) * 0.6); m.group.visible = true; return; } m.animate(dt); m.sync(); m.group.visible = true; }
+}
+function coopApplyMonSnaps(arr) {
+  const ms = L.monsters || [L.monster];
+  for (let i = 0; i < arr.length && i < ms.length; i++) { const a = arr[i], m = ms[i]; if (!m || !m.nbuf) continue; coopBufPush(m.nbuf, { x: a[0], z: a[1], yaw: a[2], st: a[3], id: a[4], fl: a[5], mv: a[6], ct: a[7], ex: a[8] }); }
+}
+// ---------------- walls (host authoritative, partner-safe) ----------------
+function coopWrapWalls() {
+  const rm = L.removeWall, rs = L.restoreWall, Lv = L; L.coWalls = new Map();
+  L.removeWall = function (x, y) {
+    const was = Lv.g[Lv.I(x, y)]; rm(x, y); if (was === 0) return;
+    Lv.coWalls.set(Lv.I(x, y), 0); if (COOP.linked) coopSend({ t: 'wall', ls: Lv.seed, x, y, on: 0, fx: COOP.inMon ? 'smash' : 'shift' });
+  };
+  L.restoreWall = function (x, y) {
+    const R = COOP.R, wx = x * T, wz = y * T, live = COOP.linked && R.ready && COOP.rls === Lv.seed;
+    if (live) {
+      if (Math.hypot(wx - R.x, wz - R.z) < 10) return;
+      _sph.center.set(wx, 1.5, wz); _sph.radius = 2; if (Math.hypot(wx - R.x, wz - R.z) < 34 && CO_RFR.intersectsSphere(_sph) && losClear(R.x, R.z, wx, wz)) return;
+    }
+    rs(x, y); if (Lv.g[Lv.I(x, y)] !== 1) return;
+    if (live) {
+      const d = bfsDist(Lv.W, Lv.g, Math.round(R.x / T), Math.round(R.z / T));
+      if (d[Lv.I(Lv.exit.tx, Lv.exit.ty)] < 0 || d[Lv.I(Math.round(COOP.me.x / T), Math.round(COOP.me.z / T))] < 0) { rm(x, y); Lv.broken = Math.max(0, (Lv.broken || 1) - 1); return; }
+    }
+    Lv.coWalls.set(Lv.I(x, y), 1); if (COOP.linked) coopSend({ t: 'wall', ls: Lv.seed, x, y, on: 1, fx: 'shift' });
+  };
+}
+function coopUnstickLocal() {
+  const tx = Math.round(P.x / T), ty = Math.round(P.z / T); if (!L.solid(tx, ty)) return;
+  for (let r = 1; r < 8; r++) for (let y = ty - r; y <= ty + r; y++) for (let x = tx - r; x <= tx + r; x++) if (!L.solid(x, y) && !L.secretTile(x, y)) { P.x = x * T; P.z = y * T; P.vx = P.vz = 0; return; }
+}
+function coopApplyWall(d) {
+  if (d.on) { L.restoreWall(d.x, d.y); coopUnstickLocal(); AU.nz({ type: 'lowpass', freq: 200, dur: 0.8, gain: 0.25, brown: true, pos: { x: d.x * T, y: 1, z: d.y * T } }); }
+  else { L.removeWall(d.x, d.y); if (d.fx === 'smash') debris(d.x * T, d.y * T, 0x6a1010); else AU.nz({ type: 'lowpass', freq: 200, dur: 0.8, gain: 0.25, brown: true, pos: { x: d.x * T, y: 1, z: d.y * T } }); }
+  for (const q of (L.monsters || [L.monster])) if (q && q.path && !q.coPup) { q.path = null; q.repath = 0; }
+}
+function coopRelocateMonsters(x, z, minTiles) {
+  for (const mm of (L.monsters || [L.monster])) {
+    if (!mm || !mm.alive || mm.coPup) continue;
+    if (Math.hypot(mm.x - x, mm.z - z) < minTiles * T) { const t = mm.randomTile([x, z], minTiles, minTiles + 8); mm.x = t[0] * T; mm.z = t[1] * T; mm.path = null; mm.repath = 0; if (mm.state === 'chase') mm.state = 'patrol'; }
+    mm.grace = Math.max(mm.grace || 0, 3);
+  }
+}
+// ---------------- sound capture (host monster sounds are replayed on the guest) ----------------
+const CO_AU = {};
+for (const k of ['nz', 'tone']) {
+  const f = AU[k]; CO_AU[k] = f;
+  AU[k] = function (o) {
+    if (COOP.cap && COOP.on) {
+      const pos = o && o.pos;
+      if (COOP.linked && (pos || COOP.tgt === 'remote') && COOP.sfx.length < 40) { try { COOP.sfx.push([k, JSON.parse(JSON.stringify(o))]); } catch (e) { } }
+      if (!pos && COOP.tgt !== 'me') return;
+    }
+    return f.call(this, o);
+  };
+}
+function coopPlaySfx(list) { if (!list || !AU.ctx) return; for (const [k, o] of list) { if (k !== 'nz' && k !== 'tone') continue; try { CO_AU[k].call(AU, o); } catch (e) { } } }
+// ---------------- wrappers around game functions (inert when COOP.on is false) ----------------
+{
+  const _msg = msg;
+  msg = function (t) {
+    if (COOP.on && COOP.cap && COOP.tgt !== 'me') { if (COOP.tgt === 'remote') coopSend({ t: 'msg', s: String(t) }); return; }
+    return _msg(t);
+  };
+  const _emit = emitNoise; COOP.emitRaw = _emit;
+  emitNoise = function (x, z, r, type) {
+    if (!COOP.on) return _emit(x, z, r, type);
+    if (COOP.muteNoise) return;
+    if (coLinkedGuest()) { coopSend({ t: 'noise', ls: L && L.seed, x: coR2(x), z: coR2(z), r: coR2(r), ty: type }); return; }
+    const was = COOP.cap; COOP.cap = true; COOP.tgt = 'me'; try { _emit(x, z, r, type); } finally { COOP.cap = was; }
+  };
+  const _up = updateProjectiles;
+  updateProjectiles = function (dt) {
+    if (!COOP.on || !G.proj.some((p) => p.net)) return _up(dt);
+    const all = G.proj, net = all.filter((p) => p.net), loc = all.filter((p) => !p.net);
+    G.proj = net; COOP.muteNoise = true; try { _up(dt); } finally { COOP.muteNoise = false; }
+    const net2 = G.proj; G.proj = loc; _up(dt); G.proj = G.proj.concat(net2);
+  };
+  const _throw = throwBottle;
+  throwBottle = function () {
+    const n = G.proj.length; _throw();
+    if (COOP.on && COOP.linked && G.proj.length > n) { const p = G.proj[G.proj.length - 1]; coopSend({ t: 'throw', ls: L.seed, a: [p.x, p.y, p.z, p.vx, p.vy, p.vz].map(coR3) }); }
+  };
+  const _pfx = portalFX;
+  portalFX = function (p, q) { _pfx(p, q); if (coLinkedGuest() && L) coopSend({ t: 'portal', ls: L.seed, i: L.portals.indexOf(p) }); };
+  const _hurt = hurtPlayer;
+  hurtPlayer = function (a, silent, src) {
+    if (!COOP.on) return _hurt(a, silent, src);
+    if (P === COOP.R) { COOP.hurtAcc = (COOP.hurtAcc || 0) + a; COOP.hurtC = P.cause || null; COOP.hurtMi = src && L ? (L.monsters || []).indexOf(src) : -1; return; }
+    if (P !== COOP.me) return; // ghost
+    if (P.down || (P.inv || 0) > 0) return;
+    return _hurt(a, silent, src);
+  };
+  const _kill = killPlayer;
+  killPlayer = function (mon, cause) {
+    if (!COOP.on) return _kill(mon, cause);
+    if (P === COOP.R) { // host: the partner got caught
+      if (COOP.R.down || coopNow() < COOP.rDownHold) return;
+      const mi = mon && L ? (L.monsters || []).indexOf(mon) : -1;
+      coopSend({ t: 'down', ls: L.seed, mi, c: mon ? mon.kind : (cause || 'hurt') });
+      COOP.rDownHold = coopNow() + 1800; COOP.R.down = true; COOP.R.js = true;
+      if (mon) { mon.grace = Math.max(mon.grace || 0, 4); if (mon.kind === 'crawler') { mon.climb = 0; mon.climbTarget = 0; } }
+      return;
+    }
+    if (P !== COOP.me) return;
+    if (P.down || (P.inv || 0) > 0 || G.godmode) return;
+    if (G.state === 'note') { $('note').classList.add('hidden'); stopVoice(); G.state = 'play'; }
+    if (COOP.paused) coopResume(true);
+    if (P.hidden) { P.hidden = null; $('locker').classList.add('hidden'); }
+    return _kill(mon, cause);
+  };
+  const _end = showEnding;
+  showEnding = function (id, cause) {
+    if (!COOP.on) return _end(id, cause);
+    if (id === 'death') { coopEnterDowned(cause); return; }
+    const fromNet = COOP.endFromNet; COOP.endFromNet = false; COOP.allowStart = false;
+    if (!fromNet && COOP.linked) coopSend({ t: 'end', id }); P.down = false; $('coopDown').classList.add('hidden'); coopResume(true);
+    _end(id, cause); coopEndingButtons(id);
+  };
+  const _start = startLevel;
+  startLevel = function (idx, opts) {
+    if (!COOP.on) return _start(idx, opts);
+    opts = Object.assign({}, opts || {});
+    if (coLinkedGuest() && !COOP.allowStart) return; // the host decides
+    const announced = COOP.allowStart; COOP.allowStart = false;
+    if (opts.seed == null && COOP.nextSeed != null) opts.seed = COOP.nextSeed; COOP.nextSeed = null;
+    if (opts.seed == null) opts.seed = (Math.random() * 1e9) | 0;
+    delete opts.fromCP;
+    _start(idx, opts); coopSetupLevel();
+    if (COOP.role === 'host' && (!announced || COOP.joinPending)) { coopSend({ t: 'start', lv: idx, seed: L.seed, loop: G.loop || 0, diff: COOP.diff, ng: !!opts.newGame && !COOP.joinPending, st: COOP.joinPending ? coopJoinState() : undefined }); COOP.joinPending = false; }
+  };
+  const _lc = levelComplete;
+  levelComplete = function () {
+    if (!COOP.on) return _lc();
+    if (COOP.linked && !COOP.allowLC) return; COOP.allowLC = false;
+    if (COOP.role === 'host' && COOP.nextSeed == null) COOP.nextSeed = (Math.random() * 1e9) | 0;
+    COOP.allowStart = true; COOP.exitArmed = false; coopClearPing(); _lc();
+  };
+  const _ujs = updateJumpscare;
+  updateJumpscare = function (dt) { return _ujs(dt); }; // death ending is turned into "downed" inside showEnding
+  const _it = interactTarget;
+  interactTarget = function () {
+    if (COOP.on && P.down) return null;
+    if (COOP.on && COOP.linked && !P.hidden && COOP.R.ready && COOP.R.down && COOP.rls === L.seed && Math.hypot(COOP.R.x - P.x, COOP.R.z - P.z) < 2.4) return COOP.reviveIt || (COOP.reviveIt = { kind: 'revive', x: 0, z: 0, r: 2.4, active: true });
+    return _it();
+  };
+  const _pr = promptFor;
+  promptFor = function (it) {
+    if (it && it.kind === 'revive') return '[E] Удерживайте — поднять напарника' + (COOP.rvp > 0 ? ' ' + Math.round(COOP.rvp * 100) + '%' : '');
+    if (COOP.on && COOP.linked && it && it.kind === 'exit' && L.collected >= L.need && !coopBothAtExit()) return '[E] Открыть ВЫХОД (нужно прийти вдвоём)';
+    return _pr(it);
+  };
+  const _use = useInteract; COOP.useInner = _use;
+  useInteract = function (it) {
+    if (!COOP.on) return _use(it);
+    if (it.kind === 'revive') return;
+    if (!COOP.linked) return _use(it);
+    const idx = L.inter.indexOf(it);
+    if (it.kind === 'item' && it.item === 'note') { _use(it); coopSend({ t: 'note', id: it.note }); return; }
+    if (it.kind === 'item') {
+      if (!it.active) return;
+      if (COOP.role === 'host') { _use(it); if (!it.active) coopSend({ t: 'took', ls: L.seed, i: idx, by: 'h' }); else if (it.item === 'redbottle') { } return; }
+      if (it.coPend && G.time - it.coPend < 2) return; it.coPend = G.time; coopSend({ t: 'take', ls: L.seed, i: idx }); return;
+    }
+    if (it.kind === 'locker' && COOP.R.lk === idx && COOP.R.hidden) { msg('Этот шкафчик уже занят напарником.'); AU.locked(); return; }
+    if (it.kind === 'lever') { if (COOP.role === 'host') { _use(it); coopSend({ t: 'trap', ls: L.seed, i: idx }); } else { if (it.coPend && G.time - it.coPend < 2) return; it.coPend = G.time; coopSend({ t: 'use', ls: L.seed, i: idx }); } return; }
+    if (it.kind === 'secret') { _use(it); coopSend({ t: 'secret', ls: L.seed, i: idx }); return; }
+    if (it.kind === 'exit' && L.collected >= L.need) { coopExitPress(); return; }
+    return _use(it);
+  };
+  const _upd = updatePlayer;
+  updatePlayer = function (dt) {
+    if (!(COOP.on && P.down)) return _upd(dt);
+    P.vx = P.vz = 0; P.noise = 0; flashlight.intensity = 0; G.hand.visible = false;
+    const shk = G.shake; G.shake = Math.max(0, G.shake - dt * 1.5);
+    camera.position.set(P.x + (Math.random() - 0.5) * shk * 0.1, 0.32, P.z); camera.rotation.set(clamp(P.pitch, -0.6, 0.9), P.yaw, 0.35 + Math.sin(G.time * 0.7) * 0.05);
+  };
+  const _da = doAction;
+  doAction = function (a) {
+    if (COOP.on) {
+      if (a === 'pause') { if (COOP.paused) coopResume(); else if (G.state === 'play') pause(); else if (G.state === 'note') closeNote(); return; }
+      if (a === 'ping') { if (G.state === 'play' && !P.down && !COOP.paused) coopPing(); return; }
+      if (COOP.paused) return;
+      if (P.down && a !== 'full') return;
+    }
+    return _da(a);
+  };
+  const _pause = pause;
+  pause = function () {
+    if (!COOP.on) return _pause();
+    if (G.state !== 'play' || COOP.paused) return;
+    COOP.paused = true; for (const k in keys) keys[k] = false; TOUCH.run = false; resetJoy();
+    $('click').classList.add('hidden'); $('pause').classList.remove('hidden');
+    $('pauseInfo').textContent = L.cfg.name + ' — ' + L.cfg.title + ' · ' + L.cfg.item.many + ': ' + L.collected + '/' + L.need + ' · КООПЕРАТИВ: мир НЕ на паузе!';
+  };
+  const _resume = resume;
+  resume = function () { if (!COOP.on) return _resume(); coopResume(); };
+  const _mm = drawMinimap;
+  drawMinimap = function (cv) {
+    _mm(cv); if (!COOP.on || !COOP.linked || !COOP.R.ready || COOP.rls !== L.seed) return;
+    const g = cv.getContext('2d'), s = cv.width / L.W, R = COOP.R; g.fillStyle = R.down ? '#ff3a2a' : '#' + new THREE.Color(COOP.av ? COOP.av.color : 0x2ec8ff).getHexString();
+    g.beginPath(); g.arc(R.x / T * s + s / 2, R.z / T * s + s / 2, 3.2, 0, 7); g.fill();
+  };
+  const _ch = controlsHTML;
+  controlsHTML = function () {
+    let h = _ch();
+    h += '<p style="margin-top:8px;color:#9cf"><b>Кооператив:</b> ' + (TOUCH.on ? 'кнопка «ЗОВ»' : '<b>G</b>') + ' — позвать напарника (метка + звук, монстры тоже слышат). Поверженного напарника поднимают, удерживая ' + (TOUCH.on ? 'E' : '<b>E</b>') + ' рядом ~3 с. К выходу — вдвоём.</p>';
+    return h;
+  };
+  const _menu = toMenu;
+  toMenu = function () { if (COOP.on || COOP.peer) coopEndSession(); return _menu(); };
+  const _ab = window.androidBack;
+  window.androidBack = function () {
+    try {
+      if (!$('coop').classList.contains('hidden')) { $('coBack').click(); return 'ok'; }
+      if (COOP.on && COOP.paused) { if (!$('sub').classList.contains('hidden')) return _ab(); coopResume(); return 'ok'; }
+      if (COOP.on && G.state === 'play') { pause(); return 'ok'; }
+    } catch (e) { }
+    return _ab();
+  };
+}
+function coopResume(silent) {
+  if (!COOP.paused) return; COOP.paused = false;
+  $('pause').classList.add('hidden'); $('sub').classList.add('hidden'); if (!silent) requestLock();
+}
+// block gameplay keys while the co-op pause overlay is open (the world keeps running)
+document.addEventListener('keydown', (e) => {
+  if (!COOP.on) return;
+  if (COOP.paused) { if (['INPUT', 'SELECT', 'TEXTAREA'].includes((e.target && e.target.tagName) || '')) return; e.stopImmediatePropagation(); if (e.code === 'Escape' && !e.repeat) { if (!$('sub').classList.contains('hidden')) $('sub').classList.add('hidden'); else coopResume(); } return; }
+  if (e.code === 'KeyG' && !e.repeat && G.state === 'play') doAction('ping');
+}, true);
+// ---------------- session / level setup ----------------
+function coopBegin() {
+  if (COOP.on) return; COOP.on = true; COOP.me = P; coopEnterSave();
+  coopDisposeAvatar(); COOP.av = coopBuildAvatar(COOP.role === 'host' ? COOP_COLORS.guest : COOP_COLORS.host);
+  $('coopHud').classList.remove('hidden'); $('tbPing').classList.toggle('hidden', !TOUCH.on);
+  G.godmode = false; P.down = false; P.inv = 0; COOP.paused = false;
+  const rb = $('bRestartLvl'); if (rb) { if (COOP.rbLabel == null) COOP.rbLabel = rb.textContent; rb.textContent = COOP.role === 'host' ? '⟲ Перезапустить уровень (для обоих)' : '⟲ Перезапуск — только у хоста'; }
+  $('pauseCtl').innerHTML = controlsHTML();
+}
+function coopEndSession() {
+  const was = COOP.on; coopLeave(true);
+  COOP.on = false; COOP.paused = false; COOP.role = null; COOP.linked = false; COOP.R.ready = false; COOP.R.down = false;
+  coopExitSave(); coopDisposeAvatar(); coopClearPing();
+  ['coopHud', 'coopDown', 'tbPing', 'coop'].forEach((id) => $(id).classList.add('hidden'));
+  P.down = false; P.inv = 0; COOP.allowStart = COOP.allowLC = false; COOP.nextSeed = null; COOP.sfx.length = 0; COOP.joinPending = false;
+  if (was) { $('pauseCtl').innerHTML = controlsHTML(); const rb = $('bRestartLvl'); if (rb && COOP.rbLabel != null) rb.textContent = COOP.rbLabel; }
+}
+function coopSetupLevel() {
+  const me = COOP.me; me.down = false; me.inv = 2; me.downT = 0; COOP.rvp = 0; COOP.exitArmed = false; COOP.exitAt = -99; COOP.wipeT = 0; COOP.wipeWait = 0; COOP.hurtAcc = 0;
+  coopClearPing(); COOP.rbuf.length = 0; $('coopDown').classList.add('hidden');
+  if (COOP.role === 'host') { coopWrapWalls(); for (const m of (L.monsters || [L.monster])) if (m) m.update = coopHostMonUpdate; }
+  else if (COOP.linked) { coopPuppetize(); P.x += Math.cos(P.yaw) * 0.9; P.z -= Math.sin(P.yaw) * 0.9; coopUnstickLocal(); }
+  COOP.cp = { x: P.x, z: P.z, yaw: P.yaw };
+  if (COOP.av) { COOP.av.root.visible = false; COOP.av.lastX = null; }
+}
+function coopHostStartLevel(lv, o) {
+  o = o || {}; if (!COOP.on) coopBegin();
+  hideAll(); $('coop').classList.add('hidden'); coopResume(true);
+  if (o.loop != null) G.loop = o.loop;
+  if (o.ng) { P.radio = false; G.radioOn = false; radioStatic(false); G.runTime = 0; }
+  const seed = (Math.random() * 1e9) | 0;
+  coopSend({ t: 'start', lv, seed, loop: G.loop || 0, diff: COOP.diff, ng: !!o.ng });
+  COOP.allowStart = true; startLevel(lv, { seed, newGame: !!o.ng }); G.fullRun = !!o.ng && lv === 0;
+  if (TOUCH.on) enterFullscreen(true); requestLock();
+}
+function coopGuestStart(d) {
+  if (!COOP.on) coopBegin();
+  hideAll(); $('coop').classList.add('hidden'); $('ending').classList.add('hidden'); coopResume(true);
+  COOP.diff = DIFFS[d.diff] ? d.diff : 'normal'; G.loop = d.loop || 0;
+  if (d.ng) { P.radio = false; G.radioOn = false; radioStatic(false); G.runTime = 0; }
+  COOP.allowStart = true; startLevel(d.lv, { seed: d.seed, newGame: !!d.ng }); G.fullRun = !!d.ng && d.lv === 0;
+  if (d.st) coopApplyJoinState(d.st);
+  if (TOUCH.on) enterFullscreen(true); requestLock();
+}
+function coopJoinState() {
+  const picked = [], traps = [], sec = [], walls = [];
+  L.inter.forEach((it, i) => { if (it.kind === 'item' && !it.active && it.item !== 'note') picked.push(i); if (it.kind === 'lever' && (!it.active || (it.trap && it.trap.fired))) traps.push(i); if (it.kind === 'secret' && !it.active) sec.push(i); });
+  if (L.coWalls) L.coWalls.forEach((on, idx) => walls.push([idx % L.W, (idx / L.W) | 0, on]));
+  return { picked, col: L.collected, map: !!L.hasMap, walls, traps, sec, fin: L.finale ? coR2(L.finale.t) : null, notes: SAVE.notes.slice(), hp: [coR2(P.x), coR2(P.z), coR3(P.yaw)] };
+}
+function coopApplyJoinState(st) {
+  for (const i of st.picked || []) { const it = L.inter[i]; if (it && it.kind === 'item') { it.active = false; it.mesh.visible = false; } }
+  L.collected = Math.min(L.need, st.col || 0); L.hasMap = !!st.map;
+  for (const [x, y, on] of st.walls || []) { if (on) L.restoreWall(x, y); else L.removeWall(x, y); }
+  for (const i of st.traps || []) { const it = L.inter[i]; if (it && it.trap) { const tr = it.trap; it.active = false; tr.fired = true; tr.fall = 1; tr.slab.position.y = 0.25; tr.crack.visible = false; tr.arm.rotation.x = -0.6; tr.glow.material.color.set(0x30ff30); } }
+  for (const i of st.sec || []) coopApplySecret(L.inter[i], true);
+  for (const n of st.notes || []) if (NOTES[n] && !SAVE.notes.includes(n)) SAVE.notes.push(n);
+  if (L.collected >= L.need) setSign(L, L.exit.door, 'ВЫХОД', '#30ff50');
+  if (st.fin != null && L.boss) { startFinale(true); if (L.finale) L.finale.t = st.fin; }
+  if (st.hp) { P.x = st.hp[0] + Math.cos(st.hp[2]) * 0.9; P.z = st.hp[1] - Math.sin(st.hp[2]) * 0.9; P.yaw = st.hp[2]; coopUnstickLocal(); COOP.cp = { x: P.x, z: P.z, yaw: P.yaw }; }
+  saveGame(); setTimeout(() => msg('Вы присоединились к игре напарника.'), 300);
+}
+function coopApplySecret(it, quiet) {
+  if (!it || it.kind !== 'secret' || !it.active) return;
+  it.active = false; L.g[L.I(it.tx, it.ty)] = 0; it.crack.visible = false;
+  if (quiet) { it.open = 1; it.mesh.position.y = L.H / 2 - (L.H - 0.02); } else { it.open = 0; AU.door(); msg('Напарник открыл секретную комнату!'); }
+}
+function coopApplyTake(it) {
+  if (!it || it.item === 'redbottle' || !it.active) return;
+  it.active = false; it.mesh.visible = false; sparks(it.x, 0.6, it.z, 14, 0xffffff);
+  if (it.objective) {
+    L.collected = Math.min(L.need, L.collected + 1); msg('Напарник нашёл: ' + L.cfg.item.one + ' (' + L.collected + '/' + L.need + ')'); pop(L.cfg.item.one.toUpperCase() + '  ' + L.collected + '/' + L.need, '#9cf');
+    if (L.collected >= L.need) { msg('Все ' + L.cfg.item.many.toLowerCase() + ' собраны! Найдите ВЫХОД.'); setSign(L, L.exit.door, 'ВЫХОД', '#30ff50'); if (L.boss) startFinale(); }
+  } else if (it.item === 'map') { L.hasMap = true; G.showMap = true; msg('Напарник нашёл клочок карты — карта общая!'); }
+}
+function coopSpawnProj(a) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.22, 8), new THREE.MeshLambertMaterial({ color: 0x2f7a3a, emissive: 0x0a2010 })); scene.add(m);
+  G.proj.push({ mesh: m, x: a[0], y: a[1], z: a[2], vx: a[3], vy: a[4], vz: a[5], net: true });
+}
+// ---------------- exit (both players) ----------------
+function coopBothAtExit() { const R = COOP.R, me = COOP.me, e = L.exit; return !me.down && R.ready && !R.down && COOP.rls === L.seed && Math.hypot(me.x - e.x, me.z - e.z) < 7 && Math.hypot(R.x - e.x, R.z - e.z) < 7; }
+function coopExitPress() {
+  if (COOP.role === 'host') {
+    if (coopBothAtExit() || G.time - COOP.exitAt < 4) { coopHostAdvance(); return; }
+    COOP.exitAt = G.time; COOP.exitArmed = true; AU.locked(); pop('ЖДЁМ НАПАРНИКА', '#9cf');
+    msg('Ждём напарника у выхода… Нажмите ' + (TOUCH.on ? 'E' : '[E]') + ' ещё раз в течение 4 с, чтобы уйти сейчас — напарник перейдёт вместе с вами.');
+    coopSend({ t: 'exitwait', ls: L.seed });
+  } else { coopSend({ t: 'exitreq', ls: L.seed }); pop('ЖДЁМ НАПАРНИКА', '#9cf'); msg('Ждём напарника у выхода — уровень завершится, когда вы оба будете у двери (или хост решит идти).'); }
+}
+function coopHostAdvance() {
+  if (G.state !== 'play' && G.state !== 'note') return;
+  const seed = (Math.random() * 1e9) | 0; coopSend({ t: 'lvl', ls: L.seed, seed, loop: G.loop || 0 });
+  if (G.state === 'note') { $('note').classList.add('hidden'); G.state = 'play'; }
+  P.down = false; $('coopDown').classList.add('hidden');
+  COOP.nextSeed = seed; COOP.allowLC = true; L.exit.active = false; L.exit.opening = true; levelComplete();
+}
+// ---------------- downed / revive / respawn ----------------
+function coopEnterDowned(cause) {
+  const me = COOP.me; G.state = 'play'; me.down = true; me.health = 0; me.hidden = null; me.downT = COOP.linked ? COOP_DOWN_T : 2.2; COOP.rvp = 0; COOP.wipeWait = 0;
+  showHUD(true); $('locker').classList.add('hidden'); fadeTo(0, 300); G.shake = 0;
+  const m = G.js && G.js.mon; if (m && !m.coPup) { m.grace = Math.max(m.grace || 0, 4); m.path = null; }
+  $('coopDown').classList.remove('hidden'); msg(COOP.linked ? 'Вы повержены! Напарник может поднять вас.' : 'Вы повержены…');
+}
+function coopRevived() {
+  const me = COOP.me; if (!me.down) return; me.down = false; me.health = 50; me.inv = 3; $('coopDown').classList.add('hidden');
+  pop('ВЫ СНОВА НА НОГАХ', '#7f7'); msg('Напарник поднял вас!'); AU.pickup();
+}
+function coopRespawn() {
+  const cp = COOP.cp || { x: L.start.x * T, z: L.start.y * T, yaw: L.start.yaw };
+  P.down = false; P.health = 100; P.inv = 3.5; P.hidden = null; P.x = cp.x; P.z = cp.z; P.yaw = cp.yaw; P.pitch = 0; P.vx = P.vz = 0; coopUnstickLocal();
+  $('coopDown').classList.add('hidden'); G.fade = 1; fadeTo(0, 900); msg('Вы очнулись у контрольной точки.');
+  if (coLinkedGuest()) coopSend({ t: 'respawn', ls: L.seed, x: coR2(P.x), z: coR2(P.z) }); else coopRelocateMonsters(P.x, P.z, 5);
+}
+function coopWipe() {
+  const cp = COOP.cp || { x: L.start.x * T, z: L.start.y * T, yaw: L.start.yaw };
+  const d = { t: 'wipe', ls: L.seed, x: coR2(cp.x), z: coR2(cp.z), yaw: coR3(cp.yaw) }; coopSend(d); coopApplyWipe(d, false);
+}
+function coopApplyWipe(d, guest) {
+  P.down = false; P.health = 100; P.inv = 4; P.hidden = null; $('locker').classList.add('hidden'); P.x = d.x; P.z = d.z; P.yaw = d.yaw; P.pitch = 0; P.vx = P.vz = 0;
+  if (guest) { P.x += Math.cos(d.yaw) * 0.9; P.z -= Math.sin(d.yaw) * 0.9; } coopUnstickLocal();
+  $('coopDown').classList.add('hidden'); if (G.state === 'jumpscare') { G.state = 'play'; showHUD(true); }
+  if (L.finale) L.finale.t = Math.max(L.finale.t, 75);
+  G.fade = 1; fadeTo(0, 900); pop('ВОЗВРАТ', '#ff7a5a'); msg('Вы оба повержены… Возврат к контрольной точке.');
+  if (!guest) coopRelocateMonsters(d.x, d.z, 6);
+  COOP.cp = { x: P.x, z: P.z, yaw: P.yaw }; COOP.wipeT = 0; COOP.wipeWait = 0;
+}
+// ---------------- ping ----------------
+function coopPing() {
+  if (G.time - (COOP.pingAt || -9) < 1.5) return; COOP.pingAt = G.time;
+  coopSend({ t: 'ping', ls: L.seed, x: coR2(P.x), z: coR2(P.z) });
+  AU.tone({ freq: 880, freqEnd: 1320, dur: 0.18, gain: 0.08, wave: 'triangle' }); AU.tone({ freq: 1320, dur: 0.2, gain: 0.06, wave: 'triangle', delay: 0.16 });
+  emitNoise(P.x, P.z, 9, 'player'); pop('ЗОВ', '#ffe27a'); P.noise = Math.max(P.noise, 0.6);
+  if (!COOP.linked) msg('Напарника нет в игре…');
+}
+function coopOnPing(d) {
+  const pos = { x: d.x, y: 1.6, z: d.z };
+  AU.tone({ freq: 880, freqEnd: 1320, dur: 0.25, gain: 0.2, wave: 'triangle', pos }); AU.tone({ freq: 1320, dur: 0.25, gain: 0.16, wave: 'triangle', delay: 0.2, pos });
+  coopPingMarker(d.x, d.z, 'НАПАРНИК ЗОВЁТ'); msg('Напарник зовёт вас! (' + relDir(d.x, d.z) + ', ' + Math.round(Math.hypot(d.x - P.x, d.z - P.z)) + ' м)');
+}
+// ---------------- partner gone ----------------
+function coopPartnerGone(why) {
+  const wasLinked = COOP.linked, c = COOP.conn; COOP.conn = null; COOP.linked = false; COOP.R.ready = false; COOP.R.down = false; COOP.rbuf.length = 0;
+  try { if (c) c.close(); } catch (e) { }
+  const reason = why === 'bye' ? 'вышел из игры' : why === 'timeout' ? 'нет ответа' : 'связь потеряна';
+  if (!COOP.on) {
+    if (COOP.role === 'host') { $('coStart').disabled = true; if (COOP.peer) coStat('Напарник отключился (' + reason + '). Ждём снова… Код: ' + COOP.code, 'err'); }
+    else if (COOP.role === 'guest') { coStat(why === 'bye' ? 'Хост закрыл комнату.' : 'Соединение с хостом потеряно (' + reason + ').', 'err'); coopLeave(true); }
+    return;
+  }
+  if (!wasLinked) return;
+  if (COOP.av) { COOP.av.root.visible = false; COOP.av.marker.visible = false; COOP.av.spot.intensity = 0; }
+  if (COOP.role === 'host') { msg('Напарник отключился. Вы продолжаете один.'); toast('Напарник отключился (' + reason + '). Он может вернуться по коду ' + COOP.code + '.', 6000); }
+  else {
+    coopUnpuppet(); msg('Связь с хостом потеряна. Вы продолжаете один.'); toast('Хост отключился (' + reason + ') — дальше вы играете один.', 6000);
+    if (COOP.peer) { const p = COOP.peer; COOP.peer = null; setTimeout(() => { try { p.destroy(); } catch (e) { } }, 300); }
+  }
+  if (P.down) P.downT = Math.min(P.downT, 2.2);
+  if (G.state === 'ending' && COOP.lastEnd) coopEndingButtons(COOP.lastEnd);
+}
+function coopEndingButtons(id) {
+  COOP.lastEnd = id; const b = $('endBtns'); b.innerHTML = '';
+  const mk = (t, fn) => { const x = document.createElement('button'); x.className = 'btn small'; x.textContent = t; x.onclick = () => { AU.click(); fn(); }; b.appendChild(x); };
+  if (COOP.role === 'host' || !COOP.linked) {
+    const two = COOP.linked ? ' (вдвоём)' : '';
+    if (id === 'loop') mk('Продолжить цикл…' + two, () => { G.loop = (G.loop || 0) + 1; SAVE.loops = Math.max(SAVE.loops || 0, G.loop); saveGame(); coopHostStartLevel(0, { loop: G.loop }); });
+    mk('Новая игра' + two, () => coopHostStartLevel(0, { ng: true, loop: 0 }));
+  } else { const w = document.createElement('div'); w.style.cssText = 'color:#bba;margin:8px;width:100%'; w.textContent = 'Ждём решения хоста…'; b.appendChild(w); }
+  mk('В главное меню', () => { hideAll(); toMenu(); });
+}
+// ---------------- network messages ----------------
+function coopOnMsg(d) {
+  if (!d || typeof d !== 'object' || typeof d.t !== 'string') return;
+  const R = COOP.R, host = COOP.role === 'host', lsOK = !!L && (d.ls == null || d.ls === L.seed), inGame = COOP.on && !!L;
+  switch (d.t) {
+    case 'hello':
+      if (d.v !== COOP_PROTO) { const t = 'Версии игры у вас и у напарника отличаются — обновите страницу (или приложение) у обоих.'; if (COOP.on) msg(t); else coStat(t, 'err'); coopSend({ t: 'bye' }); coopPartnerGone('ver'); return; }
+      COOP.linked = true; COOP.lastRx = coopNow(); if (d.aspect > 0.2 && d.aspect < 5) COOP.aspect = d.aspect;
+      if (host) {
+        if (COOP.on) {
+          toast('Напарник присоединился к игре!'); msg('Напарник подключился!');
+          if (G.state === 'transition') COOP.joinPending = true;
+          else if (G.state !== 'ending') coopSend({ t: 'start', lv: G.levelIdx, seed: L.seed, loop: G.loop || 0, diff: COOP.diff, ng: false, st: coopJoinState() });
+          else coopSend({ t: 'msg', s: 'Хост сейчас на экране концовки — ждём, когда он начнёт игру.' });
+        } else { coStat('Напарник подключился! Выберите сложность и нажмите «Начать вместе».', 'ok'); $('coStart').disabled = false; coopLobbyInfo(); AU.pickup(); }
+      } else if (!COOP.on) coStat('Подключено к комнате ' + COOP.code + '! Ждём, когда хост начнёт игру…', 'ok');
+      return;
+    case 'full': coStat('Комната уже занята (максимум 2 игрока).', 'err'); coopLeave(true); return;
+    case 'bye': coopPartnerGone('bye'); return;
+    case 'hb': return;
+    case 'lobby': if (!host && !COOP.on) { COOP.diff = DIFFS[d.diff] ? d.diff : 'normal'; coStat('Подключено! Хост выбирает: сложность «' + DIFFS[COOP.diff].name + '», ' + (LEVELS[d.lv] ? LEVELS[d.lv].name : '') + '. Ждём старта…', 'ok'); } return;
+    case 'start': if (!host) coopGuestStart(d); return;
+    case 'heard': if (COOP.on) P.heardT = G.time + 1.5; return;
+    case 'msg': if (COOP.on && typeof d.s === 'string') msg(d.s.slice(0, 200)); return;
+    case 'bg': R.bg = !!d.on; if (COOP.on && d.on) toast(host ? 'Напарник свернул игру.' : 'Хост свернул игру — мир замер, пока он не вернётся.'); return;
+  }
+  if (!inGame) return;
+  switch (d.t) {
+    case 's':
+      COOP.rls = d.ls;
+      if (lsOK && Array.isArray(d.p)) { coopDecP(d.p); if (!host && Array.isArray(d.m)) coopApplyMonSnaps(d.m); if (!host && d.bo != null) L.blackout = d.bo; }
+      if (lsOK && d.sfx) coopPlaySfx(d.sfx); break;
+    case 'noise': if (host && lsOK) coopAs(R, () => COOP.emitRaw(d.x, d.z, d.r, d.ty)); break;
+    case 'throw': if (lsOK && Array.isArray(d.a)) coopSpawnProj(d.a); break;
+    case 'portal': if (host && lsOK) { const p = L.portals[d.i]; if (!p) break; for (const m of (L.monsters || [L.monster])) { if (!m || !m.alive) continue; if (m.kind === 'glitch' && (m.state === 'chase' || Math.hypot(m.x - R.x, m.z - R.z) < 16)) { m.state = 'investigate'; m.followPortal = p; m.memory = 12; m.goTo(p.tx, p.ty); coopSend({ t: 'msg', s: 'Помеха следует за вами к порталу…' }); } else if (m.state === 'chase' && m.coT === R) { m.state = 'investigate'; m.memory = 4; m.goTo(p.tx, p.ty); } } } break;
+    case 'hurt': if (!host && lsOK && !P.down) { P.cause = d.c || null; const mon = d.mi >= 0 ? (L.monsters || [])[d.mi] : null; hurtPlayer(+d.a || 0, true, mon || null); } break;
+    case 'down': if (!host && lsOK) { const mon = d.mi >= 0 ? (L.monsters || [])[d.mi] : null; if (mon) mon.group.visible = true; P.cause = d.c; killPlayer(mon || null, d.c); } break;
+    case 'revive': if (lsOK) coopRevived(); break;
+    case 'respawn': if (host && lsOK) coopRelocateMonsters(d.x, d.z, 5); break;
+    case 'wipe': if (!host && lsOK) coopApplyWipe(d, true); break;
+    case 'take': if (host && lsOK) { const it = L.inter[d.i]; if (it && it.kind === 'item' && it.active) { coopApplyTake(it); coopSend({ t: 'took', ls: L.seed, i: d.i, by: 'g' }); } else coopSend({ t: 'took', ls: L.seed, i: d.i, by: 'x' }); } break;
+    case 'took': if (lsOK) { const it = L.inter[d.i]; if (!it) break; it.coPend = 0; if (d.by === 'g' && !host) { if (it.active) COOP.useInner(it); } else if (d.by === 'x') { if (it.active) { it.active = false; it.mesh.visible = false; } msg('Напарник уже подобрал это.'); } else coopApplyTake(it); } break;
+    case 'use': if (host && lsOK) { const it = L.inter[d.i]; if (it && it.kind === 'lever' && it.active) { it.active = false; fireTrap(it.trap); coopSend({ t: 'trap', ls: L.seed, i: d.i }); } } break;
+    case 'trap': if (lsOK) { const it = L.inter[d.i]; if (it && it.trap && !it.trap.fired) { it.active = false; fireTrap(it.trap); msg('Напарник дёрнул рычаг — обвал!'); } else if (it) it.active = false; } break;
+    case 'secret': if (lsOK) coopApplySecret(L.inter[d.i], false); break;
+    case 'note': if (NOTES[d.id] && !SAVE.notes.includes(d.id)) { SAVE.notes.push(d.id); saveGame(); msg('Напарник нашёл записку (' + SAVE.notes.length + '/8) — она есть в меню «Записки».'); } break;
+    case 'wall': if (!host && lsOK) coopApplyWall(d); break;
+    case 'exitreq': if (host && lsOK) { COOP.exitArmed = true; if (!coopBothAtExit()) { msg('Напарник ждёт у ВЫХОДА!'); coopPingMarker(L.exit.x, L.exit.z, 'ВЫХОД — вас ждут'); } } break;
+    case 'exitwait': if (!host && lsOK) { msg('Напарник ждёт у ВЫХОДА! Подойдите к двери.'); coopPingMarker(L.exit.x, L.exit.z, 'ВЫХОД — вас ждут'); } break;
+    case 'lvl': if (!host && lsOK) {
+      if (G.state === 'note') { $('note').classList.add('hidden'); stopVoice(); }
+      if (G.state === 'jumpscare' || G.state === 'note' || G.state === 'pause') G.state = 'play';
+      coopResume(true); P.down = false; $('coopDown').classList.add('hidden'); showHUD(true);
+      COOP.nextSeed = d.seed; G.loop = d.loop || 0; COOP.allowLC = true; L.exit.active = false; L.exit.opening = true; levelComplete();
+    } break;
+    case 'end': if (G.state !== 'ending') { $('note').classList.add('hidden'); COOP.endFromNet = true; showEnding(d.id); } break;
+    case 'ping': if (lsOK) coopOnPing(d); break;
+  }
+}
+// ---------------- per-frame co-op tick (separate rAF loop) ----------------
+let coLast = performance.now(), coHudT = 0, coHurtT = 0;
+function coopLoop(now) {
+  requestAnimationFrame(coopLoop);
+  let raw = (now - coLast) / 1000; coLast = now; if (!(raw > 0)) raw = 0.016; raw = Math.min(raw, 0.25); const dt = Math.min(raw, 0.05);
+  if (!COOP.on || !L) return;
+  try { coopTick(dt, raw); } catch (e) { console.warn('coop tick', e); }
+}
+function coopTick(dt, raw) { // dt: clamped simulation step; raw: real elapsed time (timers stay correct at low FPS)
+  raw = raw || dt;
+  const me = COOP.me, R = COOP.R, st = G.state, host = COOP.role === 'host';
+  if (st === 'note' || st === 'jumpscare') { updateWorld(dt); updateProjectiles(dt); }
+  if (me.inv > 0) me.inv = Math.max(0, me.inv - raw);
+  if (host && COOP.linked && R.ready) coopUpdRemoteCam();
+  coopAnimAvatar(dt);
+  if (G.state === 'play' || G.state === 'note') {
+    // revive the partner: hold E next to them
+    const canRv = COOP.linked && !me.down && R.ready && R.down && !R.js && COOP.rls === L.seed && G.state === 'play' && !COOP.paused && !me.hidden && Math.hypot(R.x - me.x, R.z - me.z) < 2.4;
+    if (canRv && (keys.KeyE || TOUCH.eHeld)) {
+      COOP.rvp += raw / COOP_REVIVE_T;
+      if (COOP.rvp >= 1) { COOP.rvp = 0; coopSend({ t: 'revive', ls: L.seed }); COOP.rDownHold = 0; R.down = false; R.inv = 1; pop('НАПАРНИК ПОДНЯТ', '#7f7'); AU.pickup(); msg('Вы подняли напарника!'); }
+    } else COOP.rvp = Math.max(0, COOP.rvp - raw * 1.5);
+    // downed countdown
+    if (me.down) {
+      me.downT -= raw; if (!COOP.linked) me.downT = Math.min(me.downT, 2.2);
+      const both = COOP.linked && R.ready && R.down;
+      if (both && !host) { COOP.wipeWait += raw; if (COOP.wipeWait < 6) me.downT = Math.max(me.downT, 0.5); } else COOP.wipeWait = 0;
+      if (me.downT <= 0) coopRespawn();
+    }
+    if (host && COOP.linked) {
+      if (me.down && R.ready && R.down && COOP.rls === L.seed && G.state === 'play') { COOP.wipeT += raw; if ((!R.js && COOP.wipeT > 0.6) || COOP.wipeT > 2.5) coopWipe(); } else COOP.wipeT = 0;
+      if (COOP.exitArmed && L.collected >= L.need && L.exit.active && coopBothAtExit()) coopHostAdvance();
+    }
+  }
+  if (COOP.hurtAcc > 0 && (coHurtT -= raw) <= 0) { coHurtT = 0.15; coopSend({ t: 'hurt', ls: L.seed, a: coR3(COOP.hurtAcc), c: COOP.hurtC, mi: COOP.hurtMi }); COOP.hurtAcc = 0; }
+  if (COOP.linked) {
+    if (coopNow() - COOP.lastSend >= COOP_SEND_MS) {
+      COOP.lastSend = coopNow(); const o = { t: 's', ls: L.seed, p: coopEncP() };
+      if (host) { o.m = (L.monsters || [L.monster]).filter(Boolean).map(coopEncMon); o.bo = coR2(Math.max(0, L.blackout || 0)); }
+      if (COOP.sfx.length) o.sfx = COOP.sfx.splice(0); coopSend(o);
+    }
+  } else COOP.sfx.length = 0;
+  if (COOP.pingSp) { COOP.pingT -= raw; COOP.pingSp.material.opacity = Math.min(1, COOP.pingT) * (0.7 + 0.3 * Math.sin(G.time * 8)); if (COOP.pingT <= 0) coopClearPing(); }
+  coHudT -= raw; if (coHudT <= 0) { coHudT = 0.2; coopHudTick(); }
+}
+function coopAnimAvatar(dt) {
+  const av = COOP.av; if (!av) return; const R = COOP.R;
+  const show = COOP.linked && R.ready && COOP.rls === L.seed && G.state !== 'ending' && G.state !== 'menu';
+  const s = show ? coopBufAt(COOP.rbuf, coopNow() - COOP_INTERP) : null;
+  if (!s) { av.root.visible = false; av.marker.visible = false; av.spot.intensity = 0; return; }
+  let [a, b, k] = s; if (Math.hypot(b.x - a.x, b.z - a.z) > 4) { a = b; k = 0; av.lastX = null; }
+  const x = lerp(a.x, b.x, k), z = lerp(a.z, b.z, k), yaw = lerpAngle(a.yaw, b.yaw, k), pitch = lerp(a.pitch, b.pitch, k), eye = lerp(a.eye, b.eye, k), fl = b.fl;
+  const down = !!(fl & 4), hidden = !!(fl & 2), flash = !!(fl & 1);
+  R.ix = x; R.iz = z;
+  av.root.visible = !hidden; av.root.position.set(x, 0, z); av.root.rotation.y = yaw;
+  if (av.lastX == null) { av.lastX = x; av.lastZ = z; }
+  const moved = Math.hypot(x - av.lastX, z - av.lastZ); av.lastX = x; av.lastZ = z;
+  av.spd = lerp(av.spd, Math.min(8, moved / Math.max(dt, 1e-3)), Math.min(1, dt * 8));
+  const crouch = down ? 0 : clamp((1.65 - eye) / 0.65, 0, 1);
+  av.ph += moved * Math.PI / 1.7; const sw = Math.min(1, av.spd / 3.4) * 0.75;
+  if (down) {
+    av.body.rotation.set(-Math.PI / 2 * 0.94, 0, 0.25); av.body.position.set(0, 0.2, 0.75);
+    av.legs.forEach((l, i) => { l.hip.rotation.x = 0.15 * (i ? 1 : -1); l.knee.rotation.x = -0.4; });
+    av.arms.forEach((ar, i) => { ar.sh.rotation.x = 2.6 + Math.sin(G.time * 2 + i) * 0.15; ar.sh.rotation.z = ar.s * 0.4; ar.el.rotation.x = 0.3; });
+    av.head.rotation.x = 0.4; av.torso.rotation.x = 0;
+  } else {
+    av.body.rotation.set(0, 0, 0); av.body.position.set(0, -crouch * 0.4, 0);
+    av.legs.forEach((l, i) => { const ph = av.ph + (i ? Math.PI : 0); l.hip.rotation.x = Math.sin(ph) * sw + crouch * 1.05; l.knee.rotation.x = -(Math.max(0, Math.sin(ph + 1.2)) * sw * 1.1 + crouch * 1.9); });
+    av.torso.rotation.x = -crouch * 0.35 - (av.spd > 5 ? 0.18 : 0) + Math.sin(av.ph * 2) * 0.02 * sw;
+    av.head.rotation.x = clamp(pitch * 0.7, -0.6, 0.6) + crouch * 0.3;
+    av.arms[0].sh.rotation.set(-Math.sin(av.ph) * sw * 0.9, 0, -0.08); av.arms[0].el.rotation.x = 0.3 + sw * 0.3;
+    av.arms[1].sh.rotation.set(1.25 + clamp(pitch, -1, 1) * 0.9 + crouch * 0.3, 0, 0.12); av.arms[1].el.rotation.x = 0.15;
+    av.fl.rotation.x = -Math.PI / 2;
+  }
+  // flashlight beam from the hand along the partner's view
+  const c = Math.cos(yaw), si = Math.sin(yaw), lx = down ? 0.3 : 0.27, ly = down ? 0.3 : 1.18 - crouch * 0.42, lz = down ? -0.2 : -0.5;
+  av.beamPivot.rotation.order = 'YXZ'; av.beamPivot.position.set(x + lx * c + lz * si, ly, z - lx * si + lz * c); av.beamPivot.rotation.set(down ? -0.15 : pitch, yaw, 0);
+  const on = flash && !hidden; av.beam.visible = on; av.lensGlow.visible = on; av.spot.intensity = on ? 2.0 : 0; av.lens.material.color.set(on ? 0xfff6dd : 0x333333);
+  av.beamMat.opacity = 0.11 + Math.random() * 0.02;
+  av.tag.visible = !down && !hidden;
+  av.marker.visible = down && !hidden; if (down) { av.marker.position.set(x, 1.05 + Math.sin(G.time * 3) * 0.08, z); av.marker.material.opacity = 0.75 + 0.25 * Math.sin(G.time * 6); }
+  if (!down && !hidden && L.cfg) { av.stepAcc += moved; const stride = av.spd > 5 ? 2.1 : crouch > 0.5 ? 1.2 : 1.7; if (av.stepAcc > stride) { av.stepAcc = 0; if (Math.hypot(x - P.x, z - P.z) < 25) AU.step(L.cfg.surface, av.spd > 5 ? 0.8 : crouch > 0.5 ? 0.12 : 0.4, { x, y: 0.1, z }); } }
+}
+const CO_ARROWS = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'];
+function coopHudTick() {
+  const el = $('coopHud'), R = COOP.R, me = COOP.me; if (!el) return;
+  const col = '#' + new THREE.Color(COOP.av ? COOP.av.color : 0x2ec8ff).getHexString();
+  let h;
+  if (!COOP.linked) h = '<span style="color:#f88">● Напарник не в игре</span>' + (COOP.role === 'host' && COOP.peer ? ' · код комнаты <b>' + COOP.code + '</b>' : '');
+  else if (!R.ready || COOP.rls !== L.seed) h = '<span style="color:' + col + '">●</span> Напарник: загрузка уровня…';
+  else {
+    const rx = R.ix != null ? R.ix : R.x, rz = R.iz != null ? R.iz : R.z, dx = rx - P.x, dz = rz - P.z, d = Math.hypot(dx, dz);
+    const f = dx * -Math.sin(P.yaw) + dz * -Math.cos(P.yaw), rr = dx * Math.cos(P.yaw) - dz * Math.sin(P.yaw);
+    const ar = CO_ARROWS[((Math.round(Math.atan2(rr, f) / (Math.PI / 4)) % 8) + 8) % 8];
+    h = '<span style="color:' + col + '">● НАПАРНИК</span> ' + ar + ' ' + Math.round(d) + ' м' + (R.down ? ' <span class="dn">ПОВЕРЖЕН' + (R.downT > 0 ? ' — ' + R.downT + ' с' : '') + '! Поднимите: удерживайте E рядом</span>' : ' · ❤ ' + Math.max(0, Math.round(R.health))) + (R.hidden ? ' · в шкафчике' : '') + (R.bg ? ' · <span style="color:#fa5">свернул игру</span>' : '');
+  }
+  if (COOP.rvp > 0) h += '<br><span style="color:#7f7">Поднимаем напарника… ' + Math.round(COOP.rvp * 100) + '%</span>';
+  el.innerHTML = h;
+  if (me.down) {
+    const t = !COOP.linked ? 'Возврат к контрольной точке…' : R.down ? 'Напарник тоже повержен… Сейчас вы оба вернётесь к контрольной точке.' : R.rv > 0 ? 'Напарник поднимает вас… ' + Math.round(R.rv * 100) + '%' : 'Напарник может поднять вас, удерживая ' + (TOUCH.on ? 'E' : '[E]') + ' рядом. Иначе — возврат к контрольной точке через ' + Math.max(0, Math.ceil(me.downT)) + ' с.';
+    $('coopDownT').textContent = t; $('coopDownBar').style.width = clamp(R.rv > 0 ? R.rv * 100 : me.downT / COOP_DOWN_T * 100, 0, 100) + '%';
+  }
+}
+// heartbeat + timeout
+setInterval(() => {
+  if (!COOP.conn) return;
+  if (COOP.conn.open) coopSend({ t: 'hb' });
+  const lim = COOP.R.bg ? 90000 : COOP_TIMEOUT;
+  if (COOP.linked && coopNow() - COOP.lastRx > lim) coopPartnerGone('timeout');
+}, 1000);
+document.addEventListener('visibilitychange', () => { if (COOP.linked) coopSend({ t: 'bg', on: document.hidden }); });
+addEventListener('pagehide', () => { if (COOP.conn) coopSend({ t: 'bye' }); });
+// ---------------- init ----------------
+function coopInit() {
+  $('bCoop').onclick = () => { AU.init(); AU.click(); coopOpenLobby(); };
+  $('coCreate').onclick = () => { AU.click(); coopHost(); };
+  $('coJoin').onclick = () => { AU.click(); coopJoin(); };
+  const inp = $('coCodeIn');
+  inp.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') coopJoin(); });
+  inp.addEventListener('input', () => { const v = coopNormCode(inp.value).slice(0, 5); if (inp.value !== v) inp.value = v; });
+  $('coCopy').onclick = () => {
+    AU.click(); const c = COOP.code; if (!c) return; const done = () => toast('Код ' + c + ' скопирован — отправьте его другу.');
+    try { navigator.clipboard.writeText(c).then(done, () => toast('Код комнаты: ' + c, 6000)); } catch (e) { toast('Код комнаты: ' + c, 6000); }
+  };
+  $('coDiff').onclick = () => { AU.click(); const o = ['easy', 'normal', 'nightmare']; COOP.diff = o[(o.indexOf(COOP.diff) + 1) % 3]; $('coDiff').textContent = DIFFS[COOP.diff].name; coopLobbyInfo(); };
+  $('coLvl').onchange = () => { COOP.lv = +$('coLvl').value || 0; coopLobbyInfo(); };
+  $('coStart').onclick = () => { AU.click(); if (!COOP.linked) { coStat('Напарник ещё не подключился.', 'err'); return; } coopHostStartLevel(+$('coLvl').value || 0, { ng: true, loop: 0 }); };
+  $('coBack').onclick = () => { AU.click(); coopLeave(true); COOP.role = null; $('coop').classList.add('hidden'); $('menu').classList.remove('hidden'); };
+  const rb = $('bRestartLvl'), rOrig = rb.onclick;
+  rb.onclick = (e) => { if (!COOP.on) return rOrig && rOrig(e); AU.click(); if (COOP.role === 'host' || !COOP.linked) coopHostStartLevel(G.levelIdx, {}); else toast('Перезапустить уровень может только хост.'); };
+  const tbE = $('tbE');
+  tbE.addEventListener('pointerdown', () => { TOUCH.eHeld = true; });
+  ['pointerup', 'pointercancel', 'pointerleave', 'lostpointercapture'].forEach((n) => tbE.addEventListener(n, () => { TOUCH.eHeld = false; }));
+  addEventListener('blur', () => { TOUCH.eHeld = false; });
+  requestAnimationFrame(coopLoop);
+}
+try { coopInit(); } catch (e) { console.error('coop init', e); }
+window.__coop = COOP;
+
+</script>
+<script>
+// ====================== MONSTER OVERHAUL: scarier models, unique abilities, spatial voices, proximity FX ======================
+// Patches the four monster classes in place (prototype wrappers), so co-op (host AI + guest puppets) keeps working.
+'use strict';
+const MON_LOW = () => TOUCH.on || SAVE.settings.quality === 0; // mobile / low quality -> lower detail
+function mAdd(m, p, geo, mat, x, y, z) { const me = new THREE.Mesh(m.D(geo), mat); me.position.set(x || 0, y || 0, z || 0); p.add(me); return me; }
+const mR2 = (v) => Math.round(v * 100) / 100;
+// ---------------- Улыбака: claws, black tears, a grin that widens as you get closer ----------------
+function enhSmiler(m) {
+  const low = MON_LOW();
+  m.grinMesh = m.head.children.find((c) => c.material === m.grinMat) || null;
+  m.grinGlow = m.head.children.find((c) => c.isSprite && c.scale.x > 1) || null;
+  const bone = m.D(new THREE.MeshLambertMaterial({ color: 0xe8e2d0, emissive: 0x2a2620 }));
+  if (!low) for (const a of m.arms) for (const f of a.fingers) { const c = mAdd(m, f, new THREE.ConeGeometry(0.009, 0.1, 4), bone, 0, -0.43, 0.01); c.rotation.x = Math.PI; }
+  const tear = m.D(new THREE.MeshBasicMaterial({ color: 0x0a0604, transparent: true, opacity: 0.85, depthWrite: false }));
+  for (const s of [-1, 1]) { const t = mAdd(m, m.head, new THREE.PlaneGeometry(0.035, 0.28), tear, s * 0.1, 0.0, 0.285); t.rotation.z = s * 0.1; }
+  // tiny pin-prick pupils that follow you
+  m.pupils = [];
+  const pm = m.D(new THREE.MeshBasicMaterial({ color: 0xfff4c0, fog: false }));
+  for (const s of [-1, 1]) { const p = mAdd(m, m.head, new THREE.SphereGeometry(0.012, 6, 4), pm, s * 0.1, 0.16, 0.255); m.pupils.push(p); }
+  // spine spikes pushing through the skin
+  if (!low) for (let i = 0; i < 6; i++) { const c = mAdd(m, m.torso, new THREE.ConeGeometry(0.025, 0.12, 4), bone, 0, 0.2 + i * 0.13, -0.16); c.rotation.x = -Math.PI / 2 - 0.4; }
+  const sh = new THREE.Mesh(m.D(new THREE.CircleGeometry(1.0, 16)), m.D(new THREE.MeshBasicMaterial({ map: SOFT_TEX, color: 0x000000, transparent: true, opacity: 0.7, depthWrite: false })));
+  sh.rotation.x = -Math.PI / 2; sh.position.y = 0.03; m.group.add(sh);
+  m.grinK = 0; m.vlx = m.x; m.vlz = m.z; m.chatT = 1;
+}
+// ---------------- Ползун: half-size, long centipede body (segment chain follows the head), jaw with teeth ----------------
+function enhCrawler(m) {
+  const low = MON_LOW();
+  m.body.scale.setScalar(0.5); // half the old height / thickness
+  m.height = 0.55; m.radius = 0.45; m.killR = 1.0; m.face = new THREE.Vector3(0, 0.38, 0.6);
+  const tm = m.D(new THREE.MeshLambertMaterial({ color: 0xf2ead8, emissive: 0x332e26 }));
+  const jaw = new THREE.Group(); jaw.position.set(0, -0.44, 0.24); m.head.add(jaw); m.jaw = jaw;
+  mAdd(m, jaw, new THREE.CircleGeometry(0.12, 12), m.D(new THREE.MeshBasicMaterial({ color: 0x140000, side: THREE.DoubleSide })), 0, 0, 0.02).scale.set(1, 0.55, 1);
+  if (!low) for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; const t = mAdd(m, jaw, new THREE.ConeGeometry(0.013, 0.065, 4), tm, Math.cos(a) * 0.1, Math.sin(a) * 0.055, 0.04); t.rotation.z = a + Math.PI / 2; }
+  // segmented tail: instanced (4 draw calls in total, whatever the length)
+  const n = low ? 9 : 16, skin = m.limbs[0].a.material, bone = m.limbs[0].j.material;
+  const segGeo = m.D(new THREE.SphereGeometry(0.16, low ? 8 : 12, low ? 6 : 8)); segGeo.scale(1.15, 0.6, 1.4);
+  const mk = (geo, mat, cnt) => { const im = new THREE.InstancedMesh(geo, mat, cnt); im.frustumCulled = false; m.group.add(im); return im; };
+  m.segN = n; m.segGap = 0.3;
+  m.segIM = mk(segGeo, skin, n); m.spikeIM = mk(m.D(new THREE.ConeGeometry(0.03, 0.13, 4)), bone, n);
+  m.legAIM = mk(m.D(cylGeo(0.026, 0.018, 5)), skin, n * 2); m.legBIM = mk(m.D(cylGeo(0.018, 0.005, 5)), skin, n * 2);
+  m.trail = []; m.cgait = 0;
+  m.wallK = 0; m.wallTarget = 0; m.wallSide = 1; m.dropT = 0; m.dropCD = 5; m.dropFall = false; m.dustT = 0; m.heardAt = -99;
+  crawlerChain(m, 0);
+}
+const _cvA = new THREE.Vector3(), _cvB = new THREE.Vector3(), _cvD = new THREE.Vector3(), _cQ = new THREE.Quaternion(), _cS = new THREE.Vector3(), _cM = new THREE.Matrix4(), _cUP = new THREE.Vector3(0, 1, 0);
+function cSeg(im, i, a, b) { _cvD.subVectors(b, a); const len = _cvD.length() || 0.001; _cQ.setFromUnitVectors(_cUP, _cvD.divideScalar(len)); _cM.compose(a, _cQ, _cS.set(1, len, 1)); im.setMatrixAt(i, _cM); }
+function crawlerChain(m, dt) {
+  if (!m.segIM) return;
+  const tr = m.trail, gap = m.segGap, n = m.segN, need = n * gap + 0.6;
+  if (!tr.length || Math.hypot(tr[0][0] - m.x, tr[0][1] - m.z) > 2.5) { // (re)initialise straight behind the head
+    tr.length = 0; const fx = Math.sin(m.yaw), fz = Math.cos(m.yaw); for (let d = 0; d <= need + 0.2; d += 0.15) tr.push([m.x - fx * d, m.z - fz * d]);
+  } else if (Math.hypot(tr[0][0] - m.x, tr[0][1] - m.z) > 0.08) { tr.unshift([m.x, m.z]); }
+  // trim
+  let acc = 0; for (let i = 1; i < tr.length; i++) { acc += Math.hypot(tr[i][0] - tr[i - 1][0], tr[i][1] - tr[i - 1][1]); if (acc > need + 0.5) { tr.length = i + 1; break; } }
+  m.cgait += dt * (0.6 + (m.moving || 0) * 2.6);
+  const cy = Math.cos(m.yaw), sy = Math.sin(m.yaw);
+  // walk along the trail polyline
+  let seg = 0, d0 = 0, k = 0, target = 0.32; const pts = [];
+  for (let i = 1; i < tr.length && k < n; i++) {
+    const ax = tr[i - 1][0], az = tr[i - 1][1], bx = tr[i][0], bz = tr[i][1], L2 = Math.hypot(bx - ax, bz - az);
+    while (k < n && d0 + L2 >= target) { const f = L2 > 0 ? (target - d0) / L2 : 0; pts.push([ax + (bx - ax) * f, az + (bz - az) * f]); k++; target += gap; }
+    d0 += L2;
+  }
+  while (pts.length < n) { const l = pts[pts.length - 1] || [m.x, m.z]; pts.push([l[0] - sy * gap, l[1] - cy * gap]); }
+  let plx = 0, plz = 0.12; const wig = Math.min(1, (m.moving || 0) / 3);
+  for (let i = 0; i < n; i++) {
+    const dx = pts[i][0] - m.x, dz = pts[i][1] - m.z; let lx = dx * cy - dz * sy, lz = dx * sy + dz * cy;
+    const f = i / (n - 1), sc = 1 - f * 0.45, ya = Math.atan2(plx - lx, plz - lz);
+    lx += Math.cos(ya) * Math.sin(m.cgait * 3 - i * 0.8) * 0.04 * wig; // snake-like ripple
+    const y = 0.2 - f * 0.07 + Math.sin(m.t * 3 + i) * 0.008;
+    _cQ.setFromAxisAngle(_cUP, ya); _cM.compose(_cvA.set(lx, y, lz), _cQ, _cS.set(sc, sc, sc)); m.segIM.setMatrixAt(i, _cM);
+    _cM.compose(_cvA.set(lx, y + 0.09 * sc, lz), _cQ.setFromAxisAngle(_cvB.set(Math.cos(ya), 0, -Math.sin(ya)), -0.5), _cS.set(sc, sc, sc)); m.spikeIM.setMatrixAt(i, _cM);
+    // a pair of legs per segment, wave gait (metachronal rhythm)
+    const px = Math.cos(ya), pz = -Math.sin(ya), fx = Math.sin(ya), fz = Math.cos(ya);
+    for (let s = -1; s <= 1; s += 2) {
+      const ph = m.cgait * 4 - i * 0.9 + (s > 0 ? Math.PI : 0), lift = Math.max(0, Math.sin(ph)) * 0.09 * (0.3 + wig), sw = Math.cos(ph) * 0.1 * (0.3 + wig);
+      const hip = _cvA.set(lx + px * s * 0.13 * sc, y, lz + pz * s * 0.13 * sc);
+      const knee = _cvB.set(lx + px * s * 0.3 * sc + fx * sw * 0.5, y + 0.12 * sc + lift, lz + pz * s * 0.3 * sc + fz * sw * 0.5);
+      const j = i * 2 + (s > 0 ? 1 : 0); cSeg(m.legAIM, j, hip, knee);
+      const foot = hip.set(lx + px * s * 0.42 * sc + fx * sw, Math.max(0, lift * 0.5), lz + pz * s * 0.42 * sc + fz * sw); cSeg(m.legBIM, j, knee, foot);
+    }
+    plx = lx; plz = lz;
+  }
+  m.segIM.instanceMatrix.needsUpdate = m.spikeIM.instanceMatrix.needsUpdate = m.legAIM.instanceMatrix.needsUpdate = m.legBIM.instanceMatrix.needsUpdate = true;
+}
+// ---------------- Помеха: scanline slices, pixel grin, fake copies ----------------
+function enhGlitch(m) {
+  const low = MON_LOW();
+  m.slices = [];
+  const sm = m.D(new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false }));
+  for (let i = 0; i < (low ? 3 : 9); i++) { const s = mAdd(m, m.group, new THREE.PlaneGeometry(0.6 + Math.random() * 0.6, 0.04 + Math.random() * 0.08), sm, 0, 0.25 + Math.random() * 1.95, 0); s.userData.y = s.position.y; m.slices.push(s); }
+  const gm = m.D(new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false }));
+  const grin = new THREE.Group(); grin.position.set(0, 1.9, 0.158); m.main.g.add(grin); m.pgrin = grin;
+  for (let i = 0; i < 11; i++) { const u = (i - 5) / 5; mAdd(m, grin, new THREE.PlaneGeometry(0.016, 0.016 + (i % 2) * 0.014), gm, u * 0.11, 0.03 * u * u, 0); }
+  m.decoys = []; m.decoyT = 5 + Math.random() * 6; m.glx = m.x; m.glz = m.z;
+}
+// ---------------- Мясная тень: veins, blood trail, splits into crawling spawn, hides inside walls ----------------
+function enhFlesh(m) {
+  const low = MON_LOW();
+  if (low) { // much cheaper deforming body on phones
+    const g2 = new THREE.SphereGeometry(1.15, 22, 16); m.body.geometry = g2; m.disp.push(g2); m.bgeo = g2; m.base = g2.attributes.position.array.slice();
+  } else {
+    const vm = m.D(new THREE.MeshBasicMaterial({ color: 0x3a0008 }));
+    for (let i = 0; i < 10; i++) { const a = Math.random() * 6.28, b = (Math.random() - 0.4) * 1.2; const v = mAdd(m, m.bodyG, new THREE.TorusGeometry(0.35 + Math.random() * 0.4, 0.02, 4, 10, 1.5 + Math.random()), vm, Math.cos(a) * Math.cos(b) * 1.08, Math.sin(b) * 0.98, Math.sin(a) * Math.cos(b) * 1.25); v.lookAt(v.position.clone().multiplyScalar(2)); }
+  }
+  m.blobs = []; m.netBlobs = []; m.blobMeshes = []; m.splitCD = 16 + Math.random() * 10; m.ambCD = 25 + Math.random() * 20; m.ambK = 0; m.ambDir = null; m.trailAcc = 0; m.tlx = m.x; m.tlz = m.z; m.mergeFX = 0;
+}
+{
+  const _cm = createMonster;
+  createMonster = function (kind, Lv, tx, ty) {
+    const m = _cm(kind, Lv, tx, ty);
+    monEnhance(m);
+    return m;
+  };
+}
+function monEnhance(m) { if (!m || m.enh) return; try { m.enh = true; const k = m.kind; if (k === 'smiler') enhSmiler(m); else if (k === 'crawler') enhCrawler(m); else if (k === 'glitch') enhGlitch(m); else enhFlesh(m); } catch (e) { console.warn('monster enhance', e); } }
+// a level built before this script ran (autostart / first menu scene) gets upgraded in place
+if (typeof L !== 'undefined' && L && L.monsters) L.monsters.forEach(monEnhance);
+// ---------------- AI patches (host-authoritative; P is the current target while these run) ----------------
+// ===== Ползун: walls + telegraphed drop attack =====
+{
+  const CP = Crawler.prototype, _cu = CP.update, _s2 = CP.sync2, _ch = CP.hear;
+  CP.wallFree = function () { // is there a wall on side s of the current heading?
+    const s = this.wallSide || 1, [tx, ty] = this.tile();
+    const wx = Math.round(Math.cos(this.yaw) * s), wy = Math.round(-Math.sin(this.yaw) * s);
+    return (wx || wy) && this.L.solid(tx + wx, ty + wy);
+  };
+  // Blind hunter. Detection ONLY by sound: no omniscient patrol bias, no "prowl to the player", no proximity sense for a still player.
+  //  * steps are heard only inside their real radius (sprint 16 m, walk 8.5 m, slow walk 4.5 m, crouch 2 m)
+  //  * it runs to WHERE it heard the sound, not to where you are now; when it gets there and hears nothing it sniffs and leaves
+  //  * it can only hurt someone it currently perceives (heard within the last ~1 s) - standing still makes it lose you
+  CP.perceives = function () { return this.t - this.heardAt < 1.0 && !P.hidden; };
+  CP.hear = function (x, z, radius, type) {
+    if (!this.enh) return _ch.call(this, x, z, radius, type);
+    const d = Math.hypot(x - this.x, z - this.z), tx = Math.round(x / T), ty = Math.round(z / T), pos = { x: this.x, y: 0.8, z: this.z };
+    if (type === 'player') {
+      if (d <= radius) {
+        if (this.state !== 'chase') { AU.clicks(pos, 9); AU.screech(pos); }
+        this.state = 'chase'; this.memory = 3.5; this.heardAt = this.t; this.heardPos = [x, z];
+        if (!this.goal || this.goal[0] !== tx || this.goal[1] !== ty) this.goTo(tx, ty);
+        if (Math.hypot(x - P.x, z - P.z) < 0.6) P.heardT = G.time + 1.5; // HUD: "you were heard"
+        if (typeof COOP !== 'undefined' && COOP.on && COOP.role === 'host' && COOP.R && Math.hypot(x - COOP.R.x, z - COOP.R.z) < 0.6 && !(COOP.R.heardT > G.time + 0.8)) { COOP.R.heardT = G.time + 1.5; coopSend({ t: 'heard' }); }
+      } else if (d <= radius * 1.6 && this.state === 'patrol') { // faint sound: drifts that way slowly, but does not hunt
+        if (!this.goal || Math.abs(this.goal[0] - tx) + Math.abs(this.goal[1] - ty) > 2) { this.goTo(tx, ty); this.waitT = 0.5; }
+      }
+      if (d <= radius * 3) { this.echo = [tx, ty]; this.echoT = this.t; } // distant echo: remembers the AREA it came from (no live tracking)
+      return;
+    }
+    if (d > radius) return; // bottles / thrown things: always investigates the impact point (lure)
+    if (this.state !== 'chase' || d < radius * 0.8 || !this.perceives()) { this.state = 'investigate'; this.memory = 6; this.heardPos = [x, z]; this.goTo(tx, ty); AU.clicks(pos, 5); }
+  };
+  CP.update = function (dt) {
+    if (!this.enh) return _cu.call(this, dt);
+    this.commonPre(dt); this.dropCD -= dt;
+    if (this.grace > 0) { this.grace -= dt; this.idle = 'grace'; this.moving = 0; this.animateBody(dt); this.sync2(dt); return; }
+    if (this.stun > 0) { this.stun -= dt; this.idle = 'stun'; this.moving = 0; this.animateBody(dt); this.sync2(dt); return; }
+    if (this.dropT > 0) { // telegraph (hangs above you, clicking) -> fall + lunge
+      this.dropT -= dt; this.idle = 'wait';
+      if (this.dropT > 0.8) { this.moving = 0; this.faceTo(P.x, P.z, dt, 8); this.dropFall = false; }
+      else {
+        if (!this.dropFall) { this.dropFall = true; AU.screech({ x: this.x, y: 2, z: this.z }); AU.skitter({ x: this.x, y: 2, z: this.z }); }
+        this.climbTarget = 0; this.wallTarget = 0;
+        if (this.perceives() && this.climb < 0.6) { this.idle = null; this.stepToward(P.x, P.z, 6.5, dt); }
+        if (this.climb < 0.35) this.tryKill(this.killR);
+      }
+      if (this.dropT <= 0) { this.dropFall = false; this.dropT = 0; this.state = this.perceives() ? 'chase' : 'investigate'; this.memory = 2.5; this.path = null; this.dropCD = 8 + Math.random() * 3; this.climbT = 3 + Math.random() * 3; }
+      this.animateBody(dt); this.sync2(dt); return;
+    }
+    let speed = 2.4;
+    if (this.state === 'chase' || this.state === 'investigate') {
+      speed = this.state === 'chase' ? 5.0 + (this.L.loop ? 0.6 : 0) : 3.8;
+      const arrived = this.follow(dt, speed);
+      if (arrived) {
+        const hp = this.heardPos;
+        if (this.state === 'chase' && this.perceives() && this.dist < 2.2) this.stepToward(P.x, P.z, speed * 0.9, dt); // it hears you right next to it
+        else if (hp && Math.hypot(hp[0] - this.x, hp[1] - this.z) > 0.15 && Math.hypot(hp[0] - this.x, hp[1] - this.z) < T) this.stepToward(hp[0], hp[1], speed * 0.6, dt);
+        else {
+          this.idle = 'search'; this.searchT = 1; this.memory -= dt;
+          if (Math.random() < dt * 0.8) AU.clicks({ x: this.x, y: 0.6, z: this.z }, 3);
+          if (this.memory <= 0) { this.state = 'patrol'; this.path = null; this.searchT = 0; this.heardPos = null; this.waitT = 1 + Math.random() * 2; }
+        }
+      }
+    } else {
+      this.searchT = 0;
+      // patrol: random roaming, sometimes towards the area of the last distant echo (only noise gives it information)
+      if ((!this.path || this.pi >= this.path.length) && this.waitT <= dt && this.echo && this.t - this.echoT < 60 && Math.random() < 0.7) {
+        const e = this.echo; let t = null; for (let k = 0; k < 20 && !t; k++) { const q = [e[0] + Math.round((Math.random() - 0.5) * 8), e[1] + Math.round((Math.random() - 0.5) * 8)]; if (!this.L.solid(q[0], q[1])) t = q; }
+        if (t) { this.goTo(t[0], t[1]); this.waitT = 1 + Math.random() * 2; }
+      }
+      this.patrolStep(dt, speed, 0.0001, 0, 99);
+    }
+    // floor / wall / ceiling
+    this.climbT -= dt;
+    if (this.climbT <= 0) {
+      this.climbT = 3 + Math.random() * 6; this.climbTarget = Math.random() < (this.state === 'patrol' ? 0.45 : 0.3) ? 1 : 0; this.wallTarget = 0;
+      if (this.climbTarget === 0 && Math.random() < 0.55) for (const s of Math.random() < 0.5 ? [1, -1] : [-1, 1]) { this.wallSide = s; if (this.wallFree()) { this.wallTarget = 1; break; } }
+      if (this.dist < 15) AU.skitter({ x: this.x, y: 1, z: this.z });
+    }
+    if (this.wallTarget && !this.wallFree()) this.wallTarget = 0;
+    this.clickT -= dt; if (this.clickT <= 0) { this.clickT = this.state === 'patrol' ? 1.5 + Math.random() * 2.5 : 0.5 + Math.random() * 0.6; if (this.dist < 28) AU.clicks({ x: this.x, y: 0.5 + this.climb * 2, z: this.z }, 3 + (Math.random() * 6 | 0)); }
+    // drop attack from the ceiling / a wall - only on a player it can hear right now
+    const high = this.climb > 0.85 || this.wallK > 0.85;
+    if (high && this.dropCD <= 0 && this.perceives() && this.dist < (this.climb > 0.85 ? 3.4 : 2.6) && G.state === 'play') {
+      this.dropT = this.climb > 0.85 ? 1.4 : 1.15; this.state = 'chase'; this.memory = 3;
+      AU.clicks({ x: this.x, y: 2.6, z: this.z }, 16); AU.nz({ type: 'bandpass', freq: 700, freqEnd: 300, Q: 2, dur: 0.6, gain: 0.35, pos: { x: this.x, y: 2.6, z: this.z } });
+    }
+    this.animateBody(dt); this.sync2(dt);
+    this.tryKill(this.killR);
+  };
+  // no kills while it is up on the ceiling / a wall, except during the (telegraphed) drop
+  CP.canTouch = function () { return !this.enh || (this.dropFall || (this.climb < 0.45 && this.wallK < 0.5)) && (this.state === 'chase' || this.dropT > 0) && this.perceives(); };
+  CP.tryKill = function (r) { if (!this.canTouch()) return; Monster.prototype.tryKill.call(this, r); };
+  CP.sync2 = function (dt) {
+    if (!this.enh) return _s2.call(this, dt);
+    this.lastIdle = this.idle;
+    const k = this.dropFall ? 9 : 1.6;
+    this.climb += (this.climbTarget - this.climb) * Math.min(1, dt * k);
+    this.wallK += ((this.wallTarget && this.climb < 0.5 ? 1 : 0) - this.wallK) * Math.min(1, dt * (this.dropFall ? 9 : 2.4));
+    const c = this.climb, w = this.wallK * (1 - Math.min(1, c * 2)), s = this.wallSide || 1, off = w * (T / 2 - 0.05);
+    this.group.position.set(this.x + Math.cos(this.yaw) * s * off, c * this.L.H + w * 1.2, this.z - Math.sin(this.yaw) * s * off);
+    this.group.rotation.set(0, this.yaw, c * Math.PI + s * w * Math.PI / 2, 'YXZ');
+  };
+  CP.netExtra = function () { return ((this.wallSide || 1) + 1) | (this.wallTarget ? 4 : 0) | (this.dropT > 0.8 ? 8 : 0) | (this.dropFall ? 16 : 0); };
+  CP.applyNetExtra = function (ex) { if (typeof ex !== 'number') return; this.wallSide = (ex & 3) - 1 || 1; this.wallTarget = ex & 4 ? 1 : 0; this.dropTele = !!(ex & 8); this.dropFall = !!(ex & 16); };
+}
+// ===== Мясная тень: hides inside walls (ambush), splits into crawling spawn =====
+function fleshBlobs(m, dt) {
+  for (let i = m.blobs.length - 1; i >= 0; i--) {
+    const b = m.blobs[i]; b.t += dt;
+    if (b.mode === 'hunt' && (b.t > 10 || P.hidden || !m.alive)) b.mode = 'return';
+    if (b.mode === 'lure') { b.lt -= dt; if (b.lt <= 0) { b.mode = 'return'; b.path = null; } }
+    const tx = b.mode === 'lure' ? b.lx : b.mode === 'hunt' ? P.x : m.x, tz = b.mode === 'lure' ? b.lz : b.mode === 'hunt' ? P.z : m.z, spd = b.mode === 'return' ? 3.8 : 3.1;
+    b.rp -= dt;
+    if (b.rp <= 0 || !b.path) { b.rp = 0.5; b.path = bfsPath(m.L.W, m.L.g, Math.round(b.x / T), Math.round(b.z / T), Math.round(tx / T), Math.round(tz / T)); b.pi = 0; }
+    let gx = tx, gz = tz;
+    if (b.path) { while (b.pi < b.path.length) { const c = b.path[b.pi], cx = (c % m.L.W) * T, cz = ((c / m.L.W) | 0) * T; if (Math.hypot(cx - b.x, cz - b.z) < 0.35 && b.pi < b.path.length - 1) { b.pi++; continue; } gx = cx; gz = cz; break; } if (b.pi >= b.path.length - 1) { gx = tx; gz = tz; } }
+    const dx = gx - b.x, dz = gz - b.z, dd = Math.hypot(dx, dz);
+    if (dd > 0.02) { const s = Math.min(dd, spd * dt); const r = collide(b.x + dx / dd * s, b.z + dz / dd * s, 0.25, b.x, b.z); b.x = r[0]; b.z = r[1]; b.yaw = Math.atan2(dx, dz); }
+    if (b.mode === 'hunt' && !P.hidden && G.state === 'play' && !G.godmode && Math.hypot(P.x - b.x, P.z - b.z) < 0.85) { P.cause = 'flesh'; hurtPlayer(15 * dt, true, m); b.biteT = (b.biteT || 0) - dt; if (b.biteT <= 0) { b.biteT = 0.7; AU.nz({ type: 'lowpass', freq: 900, freqEnd: 200, dur: 0.25, gain: 0.4, brown: true, pos: { x: b.x, y: 0.4, z: b.z } }); } }
+    if ((b.mode === 'return' && Math.hypot(m.x - b.x, m.z - b.z) < 1.4) || b.t > 24) { m.blobs.splice(i, 1); m.mergeFX = 1; AU.nz({ type: 'lowpass', freq: 500, freqEnd: 120, dur: 0.5, gain: 0.5, brown: true, pos: { x: m.x, y: 1, z: m.z } }); }
+  }
+}
+{
+  const FP = Flesh.prototype, _fu = FP.update, _fh = FP.hear;
+  FP.update = function (dt) {
+    if (!this.enh) return _fu.call(this, dt);
+    if (this.blobs.length) fleshBlobs(this, dt);
+    if (!this.alive) { this.blobs.length = 0; return _fu.call(this, dt); }
+    this.splitCD -= dt; this.ambCD -= dt;
+    if (this.state === 'ambush') {
+      this.commonPre(dt); this.animate(dt); this.idle = 'ambush'; this.moving = 0; this.ambT -= dt;
+      if (this.grace > 0) { this.grace -= dt; this.sync(); return; }
+      const sees = !P.hidden && this.dist < 4.6 && losClear(this.x, this.z, P.x, P.z);
+      if (sees || this.ambNoise || this.ambT <= 0) {
+        const n = this.ambNoise; this.ambNoise = null; this.ambCD = 35 + Math.random() * 20; this.path = null; this.repath = 0;
+        const pos = { x: this.x, y: 1.4, z: this.z };
+        if (sees) { this.state = 'chase'; this.memory = 8; this.grace = 0.7; AU.growl(pos, 1.4); AU.boom(pos, false); G.shake = Math.max(G.shake, 0.6); if (!this.burstMsg) { this.burstMsg = 1; msg('Стена ожила! Мясная тень пряталась внутри!'); } }
+        else if (n) { this.state = 'investigate'; this.memory = 6; this.inv = [Math.round(n[0] / T), Math.round(n[1] / T)]; this.planTo(this.inv[0], this.inv[1]); AU.growl(pos, 0.9); }
+        else { this.state = 'patrol'; AU.growl(pos, 0.6); }
+        if (this.ambDir) debris(this.x + this.ambDir[0] * T * 0.5, this.z + this.ambDir[1] * T * 0.5, 0x6a1010);
+        this.burstT = 1;
+      }
+      this.sync(); return;
+    }
+    _fu.call(this, dt);
+    if (!this.alive || this.grace > 0) return;
+    // split into two crawling spawn during a long chase
+    if (this.state === 'chase' && this.splitCD <= 0 && !this.blobs.length && !P.hidden && this.dist > 5 && this.dist < 18 && this.smash === 0) {
+      this.splitCD = 28 + Math.random() * 12;
+      for (const s of [-1, 1]) this.blobs.push({ x: this.x + Math.cos(this.yaw) * s * 0.7, z: this.z - Math.sin(this.yaw) * s * 0.7, t: 0, mode: 'hunt', rp: 0, path: null, pi: 0, yaw: this.yaw });
+      AU.growl({ x: this.x, y: 1.4, z: this.z }, 1.2); AU.nz({ type: 'lowpass', freq: 700, freqEnd: 150, dur: 0.8, gain: 0.6, brown: true, pos: { x: this.x, y: 1, z: this.z } });
+      if (!this.splitMsg) { this.splitMsg = 1; if (this.dist < 25) msg('Мясная тень разделилась! Куски ползут к тебе… их можно отвлечь бутылкой.'); }
+    }
+    // sink into an adjacent breakable wall and wait there
+    if (this.state === 'patrol' && this.ambCD <= 0 && this.dist > 12 && !this.blobs.length && this.stuck <= 0 && this.smash === 0) {
+      const [x, y] = this.tile(), W = this.L.W;
+      const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => { const nx = x + dx, ny = y + dy; return nx > 0 && ny > 0 && nx < W - 1 && ny < W - 1 && this.L.g[this.L.I(nx, ny)] === 1 && !this.L.unbreak[this.L.I(nx, ny)]; });
+      if (dirs.length && Math.abs(this.x - x * T) < 0.4 && Math.abs(this.z - y * T) < 0.4) {
+        this.ambDir = dirs[(Math.random() * dirs.length) | 0]; this.state = 'ambush'; this.ambT = 22 + Math.random() * 10; this.path = null; this.ambNoise = null;
+        AU.nz({ type: 'lowpass', freq: 600, freqEnd: 100, dur: 1.2, gain: 0.45, brown: true, pos: { x: this.x, y: 1, z: this.z } });
+      } else this.ambCD = 2.5;
+    }
+  };
+  FP.hear = function (x, z, r, type) {
+    if (!this.alive) return;
+    if (this.enh && this.state === 'ambush') { if (Math.hypot(x - this.x, z - this.z) < r * 1.1) this.ambNoise = [x, z]; return; }
+    if (this.enh && this.blobs.length && type === 'bottle') for (const b of this.blobs) if (Math.hypot(x - b.x, z - b.z) < r * 1.4) { b.mode = 'lure'; b.lx = x; b.lz = z; b.lt = 6; b.path = null; }
+    return _fh.call(this, x, z, r, type);
+  };
+  FP.canTouch = function () { return !this.enh || this.state !== 'ambush' && !(this.ambK > 0.4); };
+  FP.tryKill = function (r) { if (!this.canTouch()) return; Monster.prototype.tryKill.call(this, r); };
+  FP.sync = function () {
+    Monster.prototype.sync.call(this);
+    if (!this.enh) return;
+    this.ambK += ((this.state === 'ambush' ? 1 : 0) - this.ambK) * 0.06;
+    if (this.ambK > 0.01 && this.ambDir) {
+      const [dx, dy] = this.ambDir, o = this.ambK * (T / 2 + 0.2);
+      this.group.position.set(this.x + dx * o, 0, this.z + dy * o); this.group.rotation.y = Math.atan2(-dx, -dy);
+      const s = 1 - 0.25 * this.ambK; this.group.scale.set(s, s, s * (1 - 0.45 * this.ambK));
+    } else if (this.alive) { const sp = (this.blobs.length || this.netBlobs.length) ? 0.82 : 1; this.group.scale.setScalar(sp * (1 + this.mergeFX * 0.18)); }
+  };
+  FP.netExtra = function () {
+    const a = this.ambDir ? (this.ambDir[0] + 1) + (this.ambDir[1] + 1) * 3 : 4;
+    if (!this.blobs.length) return a;
+    const o = [a]; for (const b of this.blobs) o.push(mR2(b.x), mR2(b.z)); return o;
+  };
+  FP.applyNetExtra = function (ex) {
+    let a = ex, arr = null; if (Array.isArray(ex)) { a = ex[0]; arr = ex; }
+    if (typeof a === 'number' && a !== 4) this.ambDir = [a % 3 - 1, ((a / 3) | 0) - 1];
+    const nb = []; if (arr) for (let i = 1; i + 1 < arr.length; i += 2) nb.push({ x: arr[i], z: arr[i + 1] });
+    if (this.netBlobs.length && !nb.length) this.mergeFX = 1;
+    this.netBlobs = nb;
+  };
+}
+
+// ===== Помеха: sees by LIGHT. Lit flashlight: spotted from 24 m in line of sight; light off: only from 7 m; through walls only within 3 m.
+//       While chasing it heads for where it LAST saw you (no x-ray); memory runs out (twice as fast in darkness).
+{
+  const GP = Glitch.prototype, _gu = GP.update;
+  GP.lightSees = function () { if (P.hidden) return false; const lit = P.flashOn && P.battery > 0; return (this.dist < (lit ? 24 : 7) && losClear(this.x, this.z, P.x, P.z)) || this.dist < 3; };
+  GP.update = function (dt) {
+    if (!this.enh) return _gu.call(this, dt);
+    this.commonPre(dt);
+    if (this.grace > 0) { this.grace -= dt; this.idle = 'grace'; this.animate(); this.sync(); return; }
+    if (this.stun > 0) { this.stun -= dt; this.idle = 'stun'; this.animate(); this.sync(); this.group.visible = Math.random() < 0.3; return; }
+    const sees = this.lightSees();
+    if (sees) { if (this.state !== 'chase') AU.zap({ x: this.x, y: 1.5, z: this.z }); this.state = 'chase'; this.memory = 5; this.lastSeen = [P.x, P.z]; }
+    const lit = P.flashOn && P.battery > 0;
+    // the glow of a lit flashlight leaks around corners: within 12 m it drifts towards the light (investigates, does not chase)
+    if (!sees && lit && !P.hidden && this.dist < 12 && this.state === 'patrol') { this.state = 'investigate'; this.memory = 4; this.goTo(...this.playerTile()); }
+    for (const p of this.L.portals) { if (!p.red && Math.hypot(p.x - this.x, p.z - this.z) < 1.1 && (this.state !== 'patrol' || this.followPortal)) { this.thrown(); return; } }
+    if (this.state === 'chase') {
+      this.memory -= dt * (lit ? 1 : 2); if (P.hidden) this.memory -= dt * 3;
+      this.repath -= dt; if (this.repath <= 0) { const ls = this.lastSeen || [P.x, P.z]; this.goTo(Math.round(ls[0] / T), Math.round(ls[1] / T)); this.repath = 0.4; }
+      if (this.follow(dt, 2.7 + (this.L.loop ? 0.8 : 0))) { if (sees) this.stepToward(P.x, P.z, 2.7, dt); else { this.idle = 'search'; this.memory -= dt; } }
+      this.teleT -= dt;
+      if (this.teleT <= 0 && sees && this.path && this.path.length > 4) { const c = this.path[Math.min(this.path.length - 3, 2 + (Math.random() * 3 | 0))]; const nx = c % this.L.W, ny = (c / this.L.W) | 0; if (Math.hypot(nx * T - P.x, ny * T - P.z) > 3.5) this.teleportTo(nx, ny); this.teleT = 2.2 + Math.random() * 1.5; }
+      if (this.memory <= 0) { this.state = 'patrol'; this.path = null; this.lastSeen = null; this.teleT = 6 + Math.random() * 4; }
+    } else if (this.state === 'investigate') {
+      if (this.follow(dt, 3.4)) { this.idle = 'search'; this.memory -= dt; if (this.memory <= 0) { this.state = 'patrol'; this.followPortal = null; } }
+    } else {
+      this.patrolStep(dt, 1.3, 0.3, 3, 10);
+      this.teleT -= dt;
+      if (this.teleT <= 0) { this.teleT = 6 + Math.random() * 6; const t = this.randomTile([P.x, P.z], 4, 10); if (!(Math.hypot(t[0] * T - P.x, t[1] * T - P.z) < 9 && losClear(t[0] * T, t[1] * T, P.x, P.z))) this.teleportTo(t[0], t[1], this.dist < 20); }
+    }
+    // static field drains health nearby (blocked by walls beyond 2 m)
+    if (!P.hidden && this.dist < 4 && G.state === 'play' && (this.dist < 2 || losClear(this.x, this.z, P.x, P.z))) { P.cause = null; hurtPlayer(7 * dt * (1 - this.dist / 4), true, this); }
+    this.animate(); this.faceTo(P.x, P.z, dt, 3); this.sync(); if (sees) this.tryKill(1.0);
+  };
+}
+// ===== Улыбака: in a blackout it may creep closer, but no more than 2.2 m/s (no 8-metre teleport-kills while you are looking at it)
+{
+  const SP = Smiler.prototype, _su = SP.update;
+  SP.update = function (dt) {
+    if (!this.enh) return _su.call(this, dt);
+    const bo = this.L.blackout > 0 && !(P.flashOn && P.battery > 0) && !P.hidden && this.grace <= 0;
+    const watched = bo && this.onScreen(), ox = this.x, oz = this.z;
+    _su.call(this, dt);
+    if (watched) { const d = Math.hypot(this.x - ox, this.z - oz), mx = 2.2 * dt; if (d > mx) { this.x = ox + (this.x - ox) / d * mx; this.z = oz + (this.z - oz) / d * mx; this.sync(); } }
+  };
+}
+// ===== Мясная тень: a thrown bottle distracts it even mid-chase, as long as it does not see you at that moment
+{
+  const FP = Flesh.prototype, _fh2 = FP.hear;
+  FP.hear = function (x, z, r, type) {
+    if (this.enh && this.alive && type === 'bottle' && this.state === 'chase' && Math.hypot(x - this.x, z - this.z) < r * 1.1 && !this.seesPlayer(17)) { this.state = 'investigate'; this.memory = 6; }
+    return _fh2.call(this, x, z, r, type);
+  };
+}
+// ---------------- Local per-frame visuals / audio (runs on every client after updateWorld; P = the local player) ----------------
+function monVoiceMake(kind) {
+  const c = AU.ctx; if (!c || !AU.sfx) return null;
+  const p = c.createPanner(); p.panningModel = 'HRTF'; p.distanceModel = 'inverse'; p.refDistance = 1.6; p.rolloffFactor = 1.6; p.maxDistance = 60; p.connect(AU.sfx);
+  const g = c.createGain(); g.gain.value = 0; g.connect(p);
+  const src = c.createBufferSource(); src.buffer = kind === 'flesh' || kind === 'crawler' ? AU.brown : AU.noise; src.loop = true;
+  const f = c.createBiquadFilter();
+  if (kind === 'smiler') { f.type = 'highpass'; f.frequency.value = 3200; src.playbackRate.value = 0.6; }      // thin wheezing breath
+  else if (kind === 'crawler') { f.type = 'bandpass'; f.frequency.value = 520; f.Q.value = 1.4; }             // wet rattling breath
+  else if (kind === 'glitch') { f.type = 'bandpass'; f.frequency.value = 2400; f.Q.value = 5; }              // radio hiss
+  else { f.type = 'lowpass'; f.frequency.value = 240; }                                                    // deep gurgle
+  const am = c.createGain(); am.gain.value = 0.55;
+  const lfo = c.createOscillator(); lfo.frequency.value = kind === 'smiler' ? 0.35 : kind === 'crawler' ? 0.55 : kind === 'glitch' ? 9 : 1.2; lfo.type = kind === 'glitch' ? 'square' : 'sine';
+  const lg = c.createGain(); lg.gain.value = 0.45; lfo.connect(lg); lg.connect(am.gain);
+  src.connect(f); f.connect(am); am.connect(g); src.start(0, Math.random()); lfo.start();
+  AU.ambNodes.push(src, lfo);
+  return { p, g, f, src };
+}
+function monVoice(m, dt, d) {
+  if (!AU.ctx) return;
+  if (!m.voice || m.voiceCtx !== AU.ambNodes) { if (m.voice) { try { m.voice.g.disconnect(); } catch (e) { } } m.voice = monVoiceMake(m.kind); m.voiceCtx = AU.ambNodes; if (!m.voice) return; }
+  const v = m.voice, t = AU.ctx.currentTime, y = m.kind === 'smiler' ? 3 : m.kind === 'crawler' ? 0.7 + (m.climb || 0) * 2 : 1.4;
+  if (v.p.positionX) { v.p.positionX.value = m.x; v.p.positionY.value = y; v.p.positionZ.value = m.z; } else v.p.setPosition(m.x, y, m.z);
+  let gain = 0;
+  if (m.alive && d < 32 && m.group.visible !== undefined && G.state !== 'menu' && !(m.grace > 1e6)) {
+    if (m.kind === 'smiler') gain = m.mvK > 0.05 ? 0.09 : 0.015;
+    else if (m.kind === 'crawler') gain = (m.dropT > 0.8 || m.dropTele) ? 0.4 : m.state === 'chase' ? 0.16 : 0.07;
+    else if (m.kind === 'glitch') gain = m.stun > 0 ? 0.01 : m.state === 'chase' ? 0.07 : 0.035;
+    else gain = m.state === 'ambush' ? 0.12 : m.state === 'chase' ? 0.3 : 0.14;
+  }
+  if (G.state === 'jumpscare' || G.state === 'ending') gain = 0;
+  v.g.gain.setTargetAtTime(gain, t, 0.25);
+}
+// fading blood/flesh trail decals (instanced)
+let mTrail = null;
+function trailInit() {
+  const n = MON_LOW() ? 24 : 70;
+  const tex = canvasTex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); for (let i = 0; i < 14; i++) { const r = 8 + Math.random() * 26, x = 64 + (Math.random() - 0.5) * 60, y = 64 + (Math.random() - 0.5) * 60; const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(90,6,8,0.95)'); gr.addColorStop(0.7, 'rgba(60,0,4,0.6)'); gr.addColorStop(1, 'rgba(40,0,0,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); } }, false);
+  const mat = new THREE.MeshLambertMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, color: 0xffffff, emissive: 0x150000 });
+  const geo = new THREE.PlaneGeometry(1, 1); geo.rotateX(-Math.PI / 2);
+  const mesh = new THREE.InstancedMesh(geo, mat, n); mesh.frustumCulled = false; mesh.count = n;
+  for (let i = 0; i < n; i++) { _m4.makeScale(0, 0, 0); mesh.setMatrixAt(i, _m4); }
+  L.group.add(mesh); L.disp && L.disp.push && L.disp.push(geo, mat, tex);
+  mTrail = { L, mesh, n, i: 0, items: [], upd: 0 };
+}
+function trailAdd(x, z, s) {
+  if (!mTrail || mTrail.L !== L) trailInit();
+  const it = { x, z, s, r: Math.random() * 6.28, t: 0 }; mTrail.items[mTrail.i] = it; mTrail.i = (mTrail.i + 1) % mTrail.n;
+}
+function trailTick(dt) {
+  if (!mTrail || mTrail.L !== L) return; mTrail.upd -= dt; if (mTrail.upd > 0) return; const step = 0.25 - mTrail.upd; mTrail.upd = 0.25;
+  for (let i = 0; i < mTrail.n; i++) { const it = mTrail.items[i]; if (!it) continue; it.t += step; const k = Math.max(0, 1 - it.t / 40); const s = it.s * (k > 0.25 ? 1 : k * 4); _m4.makeRotationY(it.r); _m4.scale(_v3.set(s, 1, s)); _m4.setPosition(it.x, 0.02 + (i % 7) * 0.001, it.z); mTrail.mesh.setMatrixAt(i, _m4); }
+  mTrail.mesh.instanceMatrix.needsUpdate = true;
+}
+// Помеха decoys: illusions that vanish when you look at them (or come close)
+function glitchDecoy(m, x, z, life, after) {
+  const g = new THREE.Group(); const body = m.main.g.clone(); g.add(body); if (!after) { const au = m.aura.clone(); g.add(au); }
+  g.position.set(x, 0, z); g.rotation.y = Math.atan2(P.x - x, P.z - z); L.group.add(g);
+  m.decoys.push({ g, body, x, z, t: 0, life, seen: 0, after: !!after });
+  if (!after) AU.nz({ type: 'bandpass', freq: 1800, Q: 1, dur: 0.5, gain: 0.25, pos: { x, y: 1.5, z } });
+}
+function glitchTick(m, dt, d) {
+  // slices jitter
+  for (const s of m.slices) { s.position.y = s.userData.y + (Math.random() - 0.5) * 0.08; s.position.x = (Math.random() - 0.5) * (m.state === 'chase' ? 0.5 : 0.2); s.visible = Math.random() < 0.7; s.rotation.y = Math.random() * 0.4 - 0.2; }
+  if (m.pgrin) m.pgrin.scale.set(1 + Math.random() * 0.3 + (d < 6 ? 0.5 : 0), 1 + (Math.random() < 0.1 ? 2 : 0), 1);
+  // afterimage when it teleports
+  if (m.alive && Math.hypot(m.x - m.glx, m.z - m.glz) > 2.5 && G.state === 'play') { if (m.decoys.length < 5) glitchDecoy(m, m.glx, m.glz, 0.45, true); }
+  m.glx = m.x; m.glz = m.z;
+  m.decoyT -= dt;
+  const max = MON_LOW() ? 1 : 2;
+  if (m.alive && m.decoyT <= 0 && G.state === 'play' && m.stun <= 0 && d < 26) {
+    m.decoyT = (m.state === 'chase' ? 5 : 9) + Math.random() * 6;
+    if (m.decoys.filter((q) => !q.after).length < max) { const t = m.randomTile([P.x, P.z], 2.5, 5); const x = t[0] * T, z = t[1] * T; if (Math.hypot(x - m.x, z - m.z) > 5 && Math.hypot(x - P.x, z - P.z) > 6) glitchDecoy(m, x, z, 6 + Math.random() * 4, false); }
+  }
+  for (let i = m.decoys.length - 1; i >= 0; i--) {
+    const q = m.decoys[i]; q.t += dt; const dd = Math.hypot(P.x - q.x, P.z - q.z);
+    q.g.visible = Math.random() > (q.after ? 0.4 : 0.12); q.g.rotation.y = lerpAngle(q.g.rotation.y, Math.atan2(P.x - q.x, P.z - q.z), Math.min(1, dt * 3));
+    q.body.scale.set(1 + (Math.random() - 0.5) * 0.12, 1 + (Math.random() < 0.06 ? 0.4 : 0), 1); q.body.position.x = Math.random() < 0.15 ? (Math.random() - 0.5) * 0.4 : 0;
+    if (q.after) { q.body.scale.y *= Math.max(0.05, 1 - q.t / q.life); }
+    let gone = q.t > q.life || !m.alive;
+    if (!q.after && !gone) {
+      _sph.center.set(q.x, 1.2, q.z); _sph.radius = 0.6;
+      const looking = FRUSTUM.intersectsSphere(_sph) && dd < 30 && losClear(P.x, P.z, q.x, q.z);
+      if (looking) q.seen += dt; if (q.seen > 0.5 || dd < 2.6) gone = true;
+      if (gone && G.state === 'play') { AU.zap({ x: q.x, y: 1.5, z: q.z }); sparks(q.x, 1.2, q.z, 16, 0xffffff); G.flashStatic = Math.max(G.flashStatic, 0.6 * Math.max(0.2, 1 - dd / 18)); }
+    }
+    if (gone) { L.group.remove(q.g); m.decoys.splice(i, 1); }
+  }
+}
+function fleshTick(m, dt, d) {
+  // trail
+  if (m.alive && m.state !== 'ambush') { const mv = Math.hypot(m.x - m.tlx, m.z - m.tlz); if (mv > 0.9) { trailAdd(m.x + (Math.random() - 0.5) * 0.4, m.z + (Math.random() - 0.5) * 0.4, 1.4 + Math.random() * 0.9); m.tlx = m.x; m.tlz = m.z; } else if (mv > 3) { m.tlx = m.x; m.tlz = m.z; } }
+  m.mergeFX = Math.max(0, m.mergeFX - dt * 1.5);
+  if (m.burstT > 0) { m.burstT -= dt; if (Math.random() < 0.5) puff(m.x, 1.2, m.z, 2, 0x501010, 1.5, 1); }
+  // blobs (host: real AI objects, guest: network targets)
+  const list = m.coPup ? m.netBlobs : m.blobs;
+  while (m.blobMeshes.length < list.length) {
+    const g = new THREE.Group(); const b = new THREE.Mesh(m.D(new THREE.SphereGeometry(0.34, 12, 9)), m.fm); b.position.y = 0.3; b.scale.set(1, 0.8, 1.2); g.add(b);
+    const em = m.D(new THREE.MeshBasicMaterial({ color: 0xffc000, fog: false }));
+    for (let k = 0; k < 3; k++) { const e = new THREE.Mesh(m.D(new THREE.SphereGeometry(0.05, 6, 5)), em); e.position.set((k - 1) * 0.13, 0.42 + (k === 1 ? 0.06 : 0), 0.33); g.add(e); }
+    const mo = new THREE.Mesh(m.D(new THREE.CircleGeometry(0.11, 10)), m.D(new THREE.MeshBasicMaterial({ color: 0x180000 }))); mo.position.set(0, 0.24, 0.4); g.add(mo); g.userData.mouth = mo; g.userData.body = b;
+    g.userData.x = list[m.blobMeshes.length].x; g.userData.z = list[m.blobMeshes.length].z;
+    L.group.add(g); m.blobMeshes.push(g);
+  }
+  m.blobMeshes.forEach((g, i) => {
+    const b = list[i]; g.visible = !!b; if (!b) return;
+    const ox = g.userData.x, oz = g.userData.z;
+    if (m.coPup) { g.userData.x += (b.x - g.userData.x) * Math.min(1, dt * 10); g.userData.z += (b.z - g.userData.z) * Math.min(1, dt * 10); } else { g.userData.x = b.x; g.userData.z = b.z; }
+    const vx = g.userData.x - ox, vz = g.userData.z - oz; if (vx * vx + vz * vz > 1e-6) g.rotation.y = Math.atan2(vx, vz);
+    const ph = m.t * 9 + i * 2; g.position.set(g.userData.x, Math.abs(Math.sin(ph)) * 0.08, g.userData.z);
+    g.userData.body.scale.set(1 + Math.sin(ph) * 0.12, 0.8 - Math.sin(ph) * 0.1, 1.2 + Math.sin(ph * 0.5) * 0.1); g.userData.mouth.scale.y = 0.5 + 0.5 * Math.abs(Math.sin(ph * 0.7));
+    if (Math.random() < dt * 2) trailAdd(g.userData.x, g.userData.z, 0.6 + Math.random() * 0.4);
+  });
+}
+function crawlerTick(m, dt, d) {
+  crawlerChain(m, dt);
+  const tele = m.coPup ? m.dropTele : m.dropT > 0.8;
+  if (m.jaw) { const open = tele || m.dropFall ? 1 : m.state === 'chase' ? 0.5 + 0.5 * Math.abs(Math.sin(m.t * 9)) : 0.1; m.jaw.scale.y += (1 + open * 1.6 - m.jaw.scale.y) * Math.min(1, dt * 10); }
+  if (tele) { m.dustT -= dt; if (m.dustT <= 0) { m.dustT = 0.06; puff(m.x + (Math.random() - 0.5) * 0.8, m.L.H - 0.15, m.z + (Math.random() - 0.5) * 0.8, 1, 0x9a8f78, 0.3, 1.3); } if (m.head) m.head.rotation.z += Math.sin(m.t * 50) * 0.25; }
+  if (m.wallK > 0.5 && Math.random() < dt * 1.5) puff(m.group.position.x, m.group.position.y, m.group.position.z, 1, 0x7a705e, 0.2, 0.8);
+}
+function smilerTick(m, dt, d) {
+  const mv = Math.hypot(m.x - m.vlx, m.z - m.vlz); m.vlx = m.x; m.vlz = m.z; m.mvK = (m.mvK || 0) * 0.9 + (mv > 1e-4 ? 0.1 : 0);
+  const k = clamp(1 - d / 12, 0, 1); m.grinK += (k - m.grinK) * Math.min(1, dt * 2.5);
+  const g = m.grinK;
+  if (m.grinMesh) m.grinMesh.scale.set(1 + 0.4 * g, 1 + 1.15 * g, 1.05 + 0.15 * g);
+  if (m.grinGlow) m.grinGlow.material.opacity = 0.3 + 0.55 * g;
+  m.head.scale.setScalar(1 + 0.12 * g);
+  if (m.pupils) { camera.getWorldPosition(_v3b); for (const p of m.pupils) { const loc = p.parent.worldToLocal(_v3.copy(_v3b)); const base = p.userData.b || (p.userData.b = p.position.clone()); const dx = clamp(loc.x - base.x, -1, 1), dy = clamp(loc.y - base.y, -1, 1); p.position.set(base.x + dx * 0.02, base.y + dy * 0.012, base.z); } }
+  // teeth chatter while it moves where you can't see it
+  m.chatT -= dt; if (m.chatT <= 0) { m.chatT = 1.3 + Math.random() * 1.5; if (m.mvK > 0.3 && d < 13 && m.alive && G.state === 'play') for (let i = 0; i < 5; i++) AU.nz({ type: 'bandpass', freq: 2800 + Math.random() * 900, Q: 10, dur: 0.02, gain: 0.25, delay: i * 0.05, pos: { x: m.x, y: 3, z: m.z } }); }
+}
+let mDroneT = 0;
+function monFxTick(dt) {
+  if (!L || G.state === 'menu') return;
+  const ms = L.monsters && L.monsters.length ? L.monsters : [L.monster];
+  let threat = 0, tk = null;
+  for (const m of ms) {
+    if (!m || !m.enh) continue;
+    const d = Math.hypot(P.x - m.x, P.z - m.z);
+    try {
+      if (m.kind === 'smiler') smilerTick(m, dt, d); else if (m.kind === 'crawler') crawlerTick(m, dt, d); else if (m.kind === 'glitch') glitchTick(m, dt, d); else fleshTick(m, dt, d);
+      monVoice(m, dt, d);
+    } catch (e) { if (!m.fxErr) { m.fxErr = 1; console.warn('monster fx', e); } }
+    if (m.alive && !(m.grace > 1e6) && !(m.stun > 0) && !P.hidden) { const t = clamp(1 - d / 9, 0, 1) * (m.state === 'ambush' ? 0.5 : losClear(P.x, P.z, m.x, m.z) ? 1 : 0.4); if (t > threat) { threat = t; tk = m; } }
+  }
+  trailTick(dt);
+  if (G.state !== 'play' || P.down) return;
+  // close-proximity effects: camera shake, distortion, static, sub drone
+  if (threat > 0.25) {
+    const q = (threat - 0.25) / 0.75;
+    G.shake = Math.max(G.shake, q * q * 0.12);
+    G.swirl = Math.max(G.swirl, q * q * (MON_LOW() ? 0.12 : 0.22));
+    if (tk.kind === 'glitch') G.flashStatic = Math.max(G.flashStatic, q * 0.4);
+    mDroneT -= dt; if (mDroneT <= 0 && q > 0.25) { mDroneT = 1.4; AU.tone({ freq: 38 + q * 14, freqEnd: 34, dur: 1.6, gain: 0.05 + 0.12 * q, wave: 'sawtooth', lp: 160 + q * 260, attack: 0.3 }); }
+    if (q > 0.5) G.hbT = Math.min(G.hbT, 0.42);
+  }
+}
+{
+  const _uw = updateWorld;
+  updateWorld = function (dt) { _uw(dt); monFxTick(dt); };
+}
+// ---------------- Jumpscare upgrade: layered scream, static burst, FOV punch, per-monster face animation ----------------
+{
+  const _kp = killPlayer;
+  killPlayer = function (mon, cause) {
+    const before = G.state; _kp(mon, cause);
+    if (G.state !== 'jumpscare' || before === 'jumpscare' || !mon) return;
+    G.flashStatic = 1; G.jsFov = camera.fov;
+    AU.tone({ freq: 170, freqEnd: 48, dur: 1.4, gain: 0.32, wave: 'sawtooth', lp: 1600, attack: 0.02 });
+    AU.tone({ freq: 230, freqEnd: 70, dur: 1.2, gain: 0.2, wave: 'square', lp: 1200, detune: 30 });
+    AU.nz({ type: 'bandpass', freq: 800, freqEnd: 3800, Q: 1.5, dur: 1.1, gain: 0.55 });
+    AU.nz({ type: 'lowpass', freq: 200, freqEnd: 40, dur: 1.4, gain: 0.7, brown: true });
+    if (mon.kind === 'smiler') AU.giggle(null);
+    else if (mon.kind === 'crawler') AU.clicks(null, 24);
+    else if (mon.kind === 'glitch') for (let i = 0; i < 8; i++) AU.tone({ freq: 100 + Math.random() * 1600, dur: 0.07, gain: 0.15, wave: 'square', delay: i * 0.08 });
+    else AU.growl(null, 1.5);
+  };
+  const _uj = updateJumpscare;
+  updateJumpscare = function (dt) {
+    _uj(dt);
+    const js = G.js; if (!js || !js.mon || G.state !== 'jumpscare') return;
+    const m = js.mon, t = js.t, k = Math.min(1, t / 0.55);
+    camera.fov = 75 - 20 * k * k + Math.sin(t * 55) * 1.5; camera.updateProjectionMatrix();
+    camera.rotation.z += (Math.random() - 0.5) * 0.1;
+    if (t < 0.15 || Math.random() < 0.08) G.flashStatic = Math.max(G.flashStatic, 0.9);
+    if (m.kind === 'smiler' && m.grinMesh) { m.grinMesh.scale.set(1.5, 2.4, 1.25); m.head.scale.setScalar(1.15); m.head.rotation.z += Math.sin(t * 40) * 0.12; }
+    else if (m.kind === 'crawler' && m.jaw) { m.jaw.scale.y = 2.6 + Math.sin(t * 45) * 0.5; }
+    else if (m.kind === 'flesh') m.mouths.forEach((mm) => mm.m.scale.set(1.35, 1.7, 1));
+    else if (m.kind === 'glitch') { G.flashStatic = Math.max(G.flashStatic, 0.75); if (m.pgrin) m.pgrin.scale.set(1.8, 2.5, 1); }
+  };
+  // restore the field of view once the jumpscare is over (death screen, co-op "downed", restart)
+  const _ud = updateDirector;
+  updateDirector = function (dt) { if (camera.fov < 70 && G.state === 'play') { camera.fov = 75; camera.updateProjectionMatrix(); } return _ud(dt); };
+  const _sl = startLevel;
+  startLevel = function (...a) { if (camera.fov !== 75) { camera.fov = 75; camera.updateProjectionMatrix(); } return _sl(...a); };
+}
+// ---------------- debug poses for close-up screenshots: ?debugmonster=1&mpose=wall|drop|ambush|decoy|split ----------------
+{
+  const _sdm = setupDebugMonster;
+  setupDebugMonster = function () {
+    _sdm(); const pose = QS.get('mpose'), m = L.monster; if (!pose || !m) return;
+    if (m.kind === 'crawler' && pose === 'wall') { for (const s of [1, -1]) { m.wallSide = s; if (m.wallFree()) break; } m.wallTarget = 1; m.wallK = 1; m.sync2(0.016); }
+    if (m.kind === 'crawler' && pose === 'drop') { m.climbTarget = m.climb = 1; m.dropTele = true; m.coPup = true; m.x += (P.x - m.x) * 0.45; m.z += (P.z - m.z) * 0.45; m.sync2(0.016); P.pitch = 0.75; }
+    if (m.kind === 'flesh' && pose === 'ambush') { const [x, y] = m.tile(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (L.solid(x + dx, y + dy) && !L.unbreak[L.I(x + dx, y + dy)]) { m.ambDir = [dx, dy]; break; } m.state = 'ambush'; m.ambK = 0.75; m.sync(); }
+    if (m.kind === 'flesh' && pose === 'split') { for (const s of [-1, 1]) m.blobs.push({ x: m.x + (P.x - m.x) * 0.45 + s * 0.9, z: m.z + (P.z - m.z) * 0.45, t: 0, mode: 'hunt', rp: 9, path: null, pi: 0 }); }
+    if (m.kind === 'glitch' && pose === 'decoy') { m.decoyT = 1e9; const dx = Math.sign(Math.round(m.x - P.x)), dz = Math.sign(Math.round(m.z - P.z)); glitchDecoy(m, P.x + dx * 4.5 - dz * 0.9, P.z + dz * 4.5 + dx * 0.9, 1e9, false); m.decoys[0].seen = -1e9; }
+  };
+}
+
+</script><!--/COOP-->
 </body>
 </html>

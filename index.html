@@ -481,7 +481,7 @@ const PBR = {
   tiles(S, n, tint, kind) { return pbrSet('tiles' + n + kind, S, 4, (a, h, ro, S) => {
     const r = prng(60 + n), c = S / n, gw = Math.max(2, c * 0.07), tt = tint || [0, 0, 0], big = NZ(S, 'big', 61), fine = NZ(S, 'fine', 62), mid = NZ(S, 'mid', 63);
     a.fillStyle = '#8e9c96'; a.fillRect(0, 0, S, S); h.fillStyle = '#383838'; h.fillRect(0, 0, S, S); ro.fillStyle = '#d0d0d0'; ro.fillRect(0, 0, S, S);
-    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const v = 196 + Math.floor(r() * 22), dirty = r() < 0.035, x0 = x * c + gw / 2, y0 = y * c + gw / 2, w = c - gw;
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const v = 172 + Math.floor(r() * 22), dirty = r() < 0.035, x0 = x * c + gw / 2, y0 = y * c + gw / 2, w = c - gw;
       a.fillStyle = dirty ? `rgb(${v - 18 + tt[0]},${v - 16 + tt[1]},${v - 30 + tt[2]})` : `rgb(${v + tt[0]},${v + 5 + tt[1]},${v + 8 + tt[2]})`; a.fillRect(x0, y0, w, w);
       const gr = a.createLinearGradient(x0, y0, x0 + w, y0 + w); gr.addColorStop(0, 'rgba(255,255,255,0.22)'); gr.addColorStop(1, 'rgba(0,30,40,0.08)'); a.fillStyle = gr; a.fillRect(x0, y0, w, w);
       h.fillStyle = '#b0b0b0'; h.fillRect(x0, y0, w, w); h.fillStyle = '#c8c8c8'; h.fillRect(x0 + 2, y0 + 2, w - 4, w - 4);
@@ -493,13 +493,13 @@ const PBR = {
   flesh(S, dark) { return pbrSet('flesh' + (dark ? 1 : 0), S, 5, (a, h, ro, S) => {
     const r = prng(dark ? 71 : 72), big = NZ(S, 'big', 71), mid = NZ(S, 'mid', 72), fine = NZ(S, 'fine', 73), m = S - 1;
     const fib = (x, y) => mid[((y * 4) & m) * S + x]; // stretched -> muscle fibres
-    pxl(a, S, (x, y, i, d, o) => { const f = big[i] * 0.55 + fib(x, y) * 0.45, n = Math.max(-1, Math.min(1, (f - 0.5) * 4.5)), b = dark ? 0.6 : 0.85; d[o] = (85 + n * 70 + (fine[i] - 0.5) * 40) * b; d[o + 1] = (14 + n * 14 + (fine[i] - 0.5) * 10) * b; d[o + 2] = (18 + n * 16 + (n < -0.4 ? 18 : 0)) * b; });
+    pxl(a, S, (x, y, i, d, o) => { const f = big[i] * 0.55 + fib(x, y) * 0.45, n = Math.max(-1, Math.min(1, (f - 0.5) * 4.5)), b = dark ? 0.6 : 0.85; d[o] = (66 + n * 50 + (fine[i] - 0.5) * 34) * b; d[o + 1] = (24 + n * 17 + (fine[i] - 0.5) * 12) * b; d[o + 2] = (26 + n * 15 + (n < -0.4 ? 14 : 0)) * b; });
     pxl(h, S, (x, y, i, d, o) => { const v = 128 + (big[i] - 0.5) * 140 + (fib(x, y) - 0.5) * 90 + (fine[i] - 0.5) * 30; d[o] = d[o + 1] = d[o + 2] = v; });
-    pxl(ro, S, (x, y, i, d, o) => { const v = 70 + (mid[i] > 0.6 ? 90 : 0) + (fine[i] - 0.5) * 60; d[o] = d[o + 1] = d[o + 2] = v; });
+    pxl(ro, S, (x, y, i, d, o) => { const v = 175 - sstep(0.6, 0.7, mid[i]) * 75 + (fine[i] - 0.5) * 50; d[o] = d[o + 1] = d[o + 2] = v; });
     a.lineCap = h.lineCap = 'round';
     for (let i = 0; i < 30; i++) { let x = r() * S, y = r() * S, ang = r() * 6.28, wd = S / 300 * (1.5 + r() * 3); const col = r() < 0.5 ? 'rgba(45,0,35,0.75)' : 'rgba(150,25,35,0.7)';
       for (let k = 0; k < 45; k++) { const nx = x + Math.cos(ang) * S / 90, ny = y + Math.sin(ang) * S / 90; for (const [g, cc, ww] of [[a, col, wd], [h, 'rgba(230,230,230,0.8)', wd * 1.2]]) { g.strokeStyle = cc; g.lineWidth = ww; g.beginPath(); g.moveTo(x, y); g.lineTo(nx, ny); g.stroke(); } x = nx; y = ny; ang += (r() - 0.5) * 0.8; wd *= 0.97; } }
-    for (let i = 0; i < 220; i++) { const x = r() * S, y = r() * S, rr = S / 400 * (1 + r() * 2.5); a.fillStyle = 'rgba(255,175,170,' + (0.1 + r() * 0.3) + ')'; a.beginPath(); a.arc(x, y, rr, 0, 7); a.fill(); ro.fillStyle = '#181818'; ro.beginPath(); ro.arc(x, y, rr * 1.5, 0, 7); ro.fill(); h.fillStyle = '#c0c0c0'; h.beginPath(); h.arc(x, y, rr, 0, 7); h.fill(); }
+    for (let i = 0; i < 220; i++) { const x = r() * S, y = r() * S, rr = S / 400 * (1 + r() * 2.5); a.fillStyle = 'rgba(225,140,130,' + (0.08 + r() * 0.2) + ')'; a.beginPath(); a.arc(x, y, rr, 0, 7); a.fill(); ro.fillStyle = '#707070'; ro.beginPath(); ro.arc(x, y, rr * 1.5, 0, 7); ro.fill(); h.fillStyle = '#c0c0c0'; h.beginPath(); h.arc(x, y, rr, 0, 7); h.fill(); }
   }); },
   waterN(S) { return pbrSet('water', S, 6, (a, h, ro, S) => { const mid = NZ(S, 'mid', 81); pxl(h, S, (x, y, i, d, o) => { const u = x / S * 6.2832, v = y / S * 6.2832; const w = Math.sin(u * 3 + Math.sin(v * 2) * 1.5) + Math.sin(v * 4 + Math.sin(u * 3) * 1.2) * 0.8 + Math.sin((u + v) * 5) * 0.4; const val = 128 + w * 30 + (mid[i] - 0.5) * 60; d[o] = d[o + 1] = d[o + 2] = val; }); }); },
   macro() { const S = 256, f = NZ(S, 'big', 99), f2 = NZ(S, 'mid', 98), cv = document.createElement('canvas'); cv.width = cv.height = S; const g = cv.getContext('2d'); pxl(g, S, (x, y, i, d, o) => { d[o] = f[i] * 255; d[o + 1] = f2[i] * 255; d[o + 2] = 0; d[o + 3] = 255; }); const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; },
@@ -846,8 +846,8 @@ const AU = {
 const LEVELS = [
   { name: 'Уровень 0', title: 'Жёлтые комнаты', sub: 'Влажный ковёр. Гул ламп. Ты здесь не один.', cells: 16, H: 3.6, fog: 0x4c4522, fogD: 0.055, hemi: [0xfff0b0, 0x403a20, 0.5], lightCol: 0xfff2c0, lightI: 1.15, lightP: 0.55, lightKind: 'panel', surface: 'carpet', item: { one: 'ключ', many: 'Ключи', count: 3, color: 0xffcc33 }, monster: 'smiler', mname: 'Улыбака', rooms: 7, braid: 0.35, grade: [1.08, 1.02, 0.82], fake: true, portals: 1 },
   { name: 'Уровень 1', title: 'Трубы', sub: 'Пар. Ржавчина. Что-то ползает в темноте.', cells: 16, H: 3.4, fog: 0x0a0707, fogD: 0.07, hemi: [0x907070, 0x140a0a, 0.45], lightCol: 0xff3020, lightI: 1.9, lightP: 0.3, lightKind: 'bulb', surface: 'concrete', item: { one: 'предохранитель', many: 'Предохранители', count: 3, color: 0xff8a1a }, monster: 'crawler', mname: 'Ползун', rooms: 4, braid: 0.3, grade: [1.02, 0.94, 0.9], portals: 1 },
-  { name: 'Уровень 2', title: 'Бассейные комнаты', sub: 'Тихая вода. Белый кафель. Помехи в эфире.', cells: 16, H: 4.6, fog: 0x8db6bd, fogD: 0.042, hemi: [0xe8ffff, 0x5a8088, 0.62], lightCol: 0xe6ffff, lightI: 0.85, lightP: 0.6, lightKind: 'square', surface: 'water', item: { one: 'жетон', many: 'Жетоны', count: 4, color: 0x33e0ff }, monster: 'glitch', mname: 'Помеха', rooms: 10, braid: 0.5, grade: [0.95, 1.02, 1.06], fake: true, portals: 2, pillars: true },
-  { name: 'Уровень 3', title: 'Мясной лабиринт', sub: 'Стены дышат. Оно голодно. Оно идёт сквозь стены.', cells: 15, H: 3.4, fog: 0x1c0505, fogD: 0.062, hemi: [0xff8070, 0x200404, 0.5], lightCol: 0xff8a50, lightI: 1.5, lightP: 0.32, lightKind: 'sac', surface: 'flesh', item: { one: 'печать', many: 'Печати', count: 3, color: 0xff2244 }, monster: 'flesh', mname: 'Мясная тень', rooms: 5, braid: 0.3, grade: [1.06, 0.92, 0.9], portals: 1 },
+  { name: 'Уровень 2', title: 'Бассейные комнаты', sub: 'Тихая вода. Белый кафель. Помехи в эфире.', cells: 16, H: 4.6, fog: 0x4f7378, fogD: 0.042, hemi: [0xe8ffff, 0x3a5a60, 0.42], lightCol: 0xe6ffff, lightI: 0.7, lightP: 0.6, lightKind: 'square', surface: 'water', item: { one: 'жетон', many: 'Жетоны', count: 4, color: 0x33e0ff }, monster: 'glitch', mname: 'Помеха', rooms: 10, braid: 0.5, grade: [0.95, 1.02, 1.06], fake: true, portals: 2, pillars: true },
+  { name: 'Уровень 3', title: 'Мясной лабиринт', sub: 'Стены дышат. Оно голодно. Оно идёт сквозь стены.', cells: 15, H: 3.4, fog: 0x1c0505, fogD: 0.062, hemi: [0xff8070, 0x200404, 0.36], lightCol: 0xff8a50, lightI: 1.5, lightP: 0.32, lightKind: 'sac', surface: 'flesh', item: { one: 'печать', many: 'Печати', count: 3, color: 0xff2244 }, monster: 'flesh', mname: 'Мясная тень', rooms: 5, braid: 0.3, grade: [1.02, 0.95, 0.94], portals: 1 },
   { name: 'Уровень ∞', title: 'Сердце Закулисья', sub: 'Все они здесь. Все они проснулись.', cells: 16, H: 3.6, fog: 0x2a0d08, fogD: 0.06, hemi: [0xff9a70, 0x301008, 0.45], lightCol: 0xff6a40, lightI: 1.3, lightP: 0.5, lightKind: 'panel', surface: 'carpet', item: { one: 'ядро', many: 'Ядра', count: 4, color: 0xff3df0 }, monster: 'smiler', monsters: ['crawler', 'glitch', 'flesh'], mname: 'Все', rooms: 8, braid: 0.55, grade: [1.12, 0.9, 0.86], portals: 2, style: 0, boss: true, objKind: 'core', fake: false },
 ];
 const NOTES = [
@@ -940,7 +940,7 @@ function bfsPath(W, g, sx, sy, tx, ty, maxN) {
     for (const n of nb) { if (n < 0 || n >= N || prev[n] >= 0 || g[n] !== 0) continue; prev[n] = c; q[t++] = n; }
     if (maxN && t > maxN) break;
   }
-  if (prev[goal] < 0) return null;
+  if (!(prev[goal] >= 0)) return null; // also rejects out-of-grid targets (was an endless loop -> 'Invalid array length')
   const path = []; let c = goal; while (c !== s) { path.push(c); c = prev[c]; } path.reverse(); return path;
 }
 // Dijkstra allowing walls with cost (for the flesh monster)
@@ -958,7 +958,7 @@ function dijkstraPath(W, g, sx, sy, tx, ty, wallCost, breakable) {
       const nd = d + cost; if (nd < dist[n]) { dist[n] = nd; prev[n] = c; push(n, nd); }
     }
   }
-  if (prev[goal] < 0) return null;
+  if (!(prev[goal] >= 0)) return null; // also rejects out-of-grid targets (was an endless loop -> 'Invalid array length')
   const path = []; let c = goal; while (c !== s) { path.push(c); c = prev[c]; } path.reverse(); return path;
 }
 // ====================== SCENE GLOBALS ======================
@@ -1067,7 +1067,7 @@ function buildLevel(lv, opts) {
     Lv.envMats.push(wallMat, floorMat, ceilMat); fRep = W; cRep = W;
   } else {
     const ws = Ds(PBR.flesh(TS, false)), fs = Ds(PBR.flesh(TS, true)); wallTex = ws.map; floorTex = fs.map; ceilTex = fs.map.clone(); ceilTex.needsUpdate = true; D(ceilTex); wallTex.repeat.set(1, H / T);
-    wallMat = D(pbrMat(ws, { ns: 1.3, macro: 'wall', uvShift: 1, lo: 0.7, hi: 1.15, emissive: 0x200000, env: 0.6 })); floorMat = D(pbrMat(fs, { ns: 1.3, macro: 'floor', lo: 0.7, hi: 1.1, env: 0.6 }));
+    wallMat = D(pbrMat(ws, { ns: 1.8, macro: 'wall', uvShift: 1, lo: 0.6, hi: 1.2, emissive: 0x0c0000, env: 0.25 })); wallMat.emissiveMap = ws.map; /* breathing glow follows the flesh texture (flat emissive washed walls to flat red) */ floorMat = D(pbrMat(fs, { ns: 1.5, macro: 'floor', lo: 0.65, hi: 1.1, env: 0.4 }));
     ceilMat = D(pbrMat({ map: ceilTex, normalMap: fs.normalMap, roughnessMap: fs.roughnessMap }, { ns: 1.2, macro: 'floor', lo: 0.7, hi: 1.1, emissive: 0x100000 }));
   }
   if (loop) { wallMat.color.set(0xd8a090); }
@@ -1323,7 +1323,7 @@ function buildWater(Lv) {
   const cm2 = D(new THREE.MeshBasicMaterial({ map: ct2, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.25 }));
   const cp2 = new THREE.Mesh(cp.geometry, cm2); cp2.rotation.x = -Math.PI / 2; cp2.position.set(c0, 0.04, c0); Lv.group.add(cp2);
   const wns = PBR.waterN(256); D(wns.map); D(wns.roughnessMap); D(wns.normalMap); wns.normalMap.repeat.set(W * 0.75, W * 0.75); Lv.waterN = wns.normalMap;
-  const wm = D(new THREE.MeshStandardMaterial({ color: 0x5fb8c8, transparent: true, opacity: 0.42, roughness: 0.04, metalness: 0.1, normalMap: wns.normalMap, normalScale: new THREE.Vector2(0.35, 0.35), envMapIntensity: 1.6, depthWrite: false })); if (Lv.envMats) Lv.envMats.push(wm);
+  const wm = D(new THREE.MeshStandardMaterial({ color: 0x1d6a78, transparent: true, opacity: 0.62, roughness: 0.06, metalness: 0.25, normalMap: wns.normalMap, normalScale: new THREE.Vector2(0.9, 0.9), envMapIntensity: 1.3, emissive: 0x03181c, depthWrite: false })); if (Lv.envMats) Lv.envMats.push(wm);
   const wp = new THREE.Mesh(cp.geometry, wm); wp.rotation.x = -Math.PI / 2; wp.position.set(c0, 0.18, c0); Lv.group.add(wp);
   Lv.caustics = [ct, ct2];
 }
@@ -1620,7 +1620,7 @@ class Monster {
 class Smiler extends Monster {
   constructor(Lv, tx, ty) {
     super(Lv, tx, ty, 'smiler'); this.height = 3.5; this.radius = 0.8; this.face = new THREE.Vector3(0, 3.2, 0.22); this.litT = 0; this.wasMoving = false; this.stepT = 0; this.giggleT = 8;
-    const skin = this.D(new THREE.MeshLambertMaterial({ map: this.D(TEX.skin('#d8d3c8', 'rgba(110,50,70,0.35)')), emissive: 0x262424 }));
+    const skin = this.D(new THREE.MeshLambertMaterial({ map: this.D(TEX.skin('#d8d3c8', 'rgba(110,50,70,0.35)')), emissive: 0x262424 })); if (TOUCH.on || SAVE.settings.quality === 0) { skin.color.setHex(0xa69e92); skin.emissive.setHex(0x141212); } // phones: dimmer albedo keeps shading under the flashlight instead of a flat white blob
     const dark = this.D(new THREE.MeshBasicMaterial({ color: 0x4a403a, transparent: true, opacity: 0.45, depthWrite: false }));
     const G2 = this.group; const add = (p, geo, mat, x, y, z) => { const m = new THREE.Mesh(this.D(geo), mat); m.position.set(x || 0, y || 0, z || 0); p.add(m); return m; };
     const root = new THREE.Group(); root.scale.setScalar(1.07); G2.add(root); this.root = root;
@@ -2080,6 +2080,7 @@ void main(){
   uv.x += ln * (rand(vec2(time, floor(uv.y * 48.0))) - 0.5) * 0.12 * staticAmt;
   vec2 dir = (uv - 0.5) * (chroma * 0.025 + caBase * (1.0 + 4.0 * r)) + vec2(chroma * 0.004, 0.0);
   vec3 col = vec3(texture2D(tDiffuse, uv + dir).r, texture2D(tDiffuse, uv).g, texture2D(tDiffuse, uv - dir).b);
+  col = vec3(col.r < 64.0 ? max(col.r, 0.0) : 64.0, col.g < 64.0 ? max(col.g, 0.0) : 64.0, col.b < 64.0 ? max(col.b, 0.0) : 64.0); // NaN/Inf-safe
   if (aoOn > 0.5) col *= mix(1.0, aoAt(uv), 0.85);
   col += vec3(texture2D(tBloom, uv + dir * 1.5).r, texture2D(tBloom, uv).g, texture2D(tBloom, uv - dir * 1.5).b) * bloomStr;
   col = toSRGB(aces(col));
@@ -2099,13 +2100,14 @@ void main(){
 const GFX = { down: [], up: [], ao: null, black: null, quad: null, mats: null, key: '', envT: 0, envPos: null, envRT: null, shT: 0 };
 const GFX_VS = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
 const GFX_LV = [ // per visual style: exposure, bloom strength, light-cone opacity
-  { exp: 0.95, bloom: 0.32, cone: 0.05 }, { exp: 0.95, bloom: 0.5, cone: 0.1 }, { exp: 0.6, bloom: 0.28, cone: 0.04 }, { exp: 0.85, bloom: 0.42, cone: 0.06 }];
+  { exp: 0.95, bloom: 0.32, cone: 0.05 }, { exp: 0.95, bloom: 0.5, cone: 0.1 }, { exp: 0.48, bloom: 0.24, cone: 0.04 }, { exp: 0.74, bloom: 0.36, cone: 0.06 }];
 const GFX_HEMI = 0.6; // hemisphere fill scaled for the linear (sRGB-correct) pipeline
 function gfxMats() {
   const mk = (fs, u, ext) => new THREE.ShaderMaterial({ uniforms: u, vertexShader: GFX_VS, fragmentShader: fs, depthTest: false, depthWrite: false, extensions: ext ? { derivatives: true } : {} });
   return {
     pre: mk(`uniform sampler2D tSrc; uniform vec2 texel; uniform float thr, knee; varying vec2 vUv;
 void main(){ vec3 c = texture2D(tSrc, vUv + texel * vec2(-0.75, -0.75)).rgb + texture2D(tSrc, vUv + texel * vec2(0.75, -0.75)).rgb + texture2D(tSrc, vUv + texel * vec2(-0.75, 0.75)).rgb + texture2D(tSrc, vUv + texel * vec2(0.75, 0.75)).rgb;
+  c = vec3(c.r < 60000.0 ? max(c.r, 0.0) : 60000.0, c.g < 60000.0 ? max(c.g, 0.0) : 60000.0, c.b < 60000.0 ? max(c.b, 0.0) : 60000.0); // NaN/Inf-safe (fp16 overflow on phones)
   c = min(c * 0.25, vec3(24.0)); float br = max(c.r, max(c.g, c.b)); float s = clamp(br - thr + knee, 0.0, 2.0 * knee); s = s * s / (4.0 * knee + 1e-4);
   gl_FragColor = vec4(c * max(s, br - thr) / max(br, 1e-4), 1.0); }`, { tSrc: { value: null }, texel: { value: new THREE.Vector2() }, thr: { value: 0.9 }, knee: { value: 0.5 } }),
     down: mk(`uniform sampler2D tSrc; uniform vec2 texel; varying vec2 vUv;
@@ -2184,9 +2186,9 @@ void main(){ vec4 wp = modelMatrix * instanceMatrix * vec4(position, 1.0); vec4 
 #else
   vB = 1.0;
 #endif
-  float d = length(mv.xyz); vFog = exp(-d * d * fogD * fogD) * smoothstep(0.8, 3.5, d); gl_Position = projectionMatrix * mv; }`;
+  float d = length(mv.xyz); vFog = exp(-min(d * d * fogD * fogD, 30.0)) * smoothstep(0.8, 3.5, d); gl_Position = projectionMatrix * mv; }`;
 const CONE_FS = `uniform vec3 col; uniform float op; varying float vY, vB, vEdge, vFog;
-void main(){ float a = pow(vY, 1.7) * pow(vEdge, 2.2) * vB * vFog * op; gl_FragColor = vec4(col * a, 1.0); }`;
+void main(){ float a = pow(clamp(vY, 1e-4, 1.0), 1.7) * pow(clamp(vEdge, 1e-4, 1.0), 2.2) * vB * vFog * op; gl_FragColor = vec4(col * max(a, 0.0), 1.0); }`;
 function buildCones(Lv) {
   const q = qualityCfg(), cfg = Lv.cfg, H = Lv.H, n = Lv.fixtures.length; if (!q.cones || !n) return;
   const k = cfg.lightKind, top = k === 'bulb' ? H - 0.42 : k === 'sac' ? H - 0.65 : H - 0.03, rt0 = k === 'bulb' ? 0.12 : k === 'sac' ? 0.22 : k === 'square' ? 0.5 : 0.6, rb = k === 'bulb' ? 1.5 : 1.7, hh = top - 0.03;
@@ -2359,6 +2361,14 @@ function collide(nx, nz, r, ox, oz) {
   }
   return [nx, nz];
 }
+const _fdir = new THREE.Vector3(); let FLASH_K = 1;
+function flashNear(dt) { // distance to whatever the beam hits first (grid march) -> dim the close-range hotspot so it does not blow out to white
+  const c = camera.position; camera.getWorldDirection(_fdir); let d = 4.5;
+  for (let s = 0.25; s < 4.5; s += 0.25) { const x = c.x + _fdir.x * s, y = c.y + _fdir.y * s, z = c.z + _fdir.z * s; if (y < 0.02 || y > L.H - 0.02 || L.solid(Math.round(x / T), Math.round(z / T))) { d = s; break; } }
+  const hl = Math.hypot(_fdir.x, _fdir.z) || 1;
+  for (const m of (L.monsters || [])) { if (!m || !m.alive || !m.group || !m.group.visible) continue; const dx = m.x - c.x, dz = m.z - c.z, al = (dx * _fdir.x + dz * _fdir.z) / hl; if (al > 0 && al < d && Math.abs(dx * _fdir.z - dz * _fdir.x) / hl < 0.9) d = al; }
+  const k = 0.32 + 0.68 * sstep(0.5, 3.6, d); FLASH_K += (k - FLASH_K) * Math.min(1, (dt || 0.016) * 8); return FLASH_K;
+}
 function updatePlayer(dt) {
   const cfg = L.cfg;
   P.portalCD -= dt; P.hurtT = Math.max(0, P.hurtT - dt * 0.8); P.noise = Math.max(0, P.noise - dt * 0.7);
@@ -2366,7 +2376,7 @@ function updatePlayer(dt) {
   // flashlight
   if (P.flashOn) { P.battery = Math.max(0, P.battery - dt * diffCfg().bat); if (P.battery <= 0) { P.flashOn = false; msg('Батарейка фонарика села.'); } }
   const low = P.battery < 15 && Math.random() < 0.08;
-  flashlight.intensity = P.flashOn ? (low ? 0.4 : 2.4) * (L.lv === 2 ? 0.8 : 1) : 0;
+  flashlight.intensity = P.flashOn ? (low ? 0.4 : 2.4) * (L.lv === 2 ? 0.8 : 1) * (TOUCH.on || SAVE.settings.quality === 0 ? flashNear(dt) : 1) : 0;
   G.lensMat.color.set(P.flashOn ? 0xfff6dd : 0x222222);
   if (P.hidden) {
     const lk = P.hidden; P.stamina = Math.min(100, P.stamina + dt * 20);
@@ -2551,7 +2561,7 @@ function updateWorld(dt) {
     }
   }
   // flesh level: breathing walls, watching eyes
-  if (L.lv === 3) { L.wallMat.emissive.setRGB(0.12 + Math.sin(L.time * 1.6) * 0.06, 0, 0); let ch = false; for (const e of L.eyes) { if (e.dead) continue; if (e.p.distanceToSquared(camera.position) < 225) { e.blink -= dt; if (e.blink < 0) e.blink = 2 + Math.random() * 5; _m4.lookAt(camera.position, e.p, UPV); _m4.scale(_v3.set(e.s, e.blink < 0.12 ? e.s * 0.12 : e.s, e.s)); _m4.setPosition(e.p); for (const m of L.eyeMeshes) m.setMatrixAt(e.i, _m4); ch = true; } } if (ch) for (const m of L.eyeMeshes) m.instanceMatrix.needsUpdate = true; }
+  if (L.lv === 3) { { const k = 0.9 + Math.sin(L.time * 1.6) * 0.35; L.wallMat.emissive.setRGB(k, k * 0.4, k * 0.4); } let ch = false; for (const e of L.eyes) { if (e.dead) continue; if (e.p.distanceToSquared(camera.position) < 225) { e.blink -= dt; if (e.blink < 0) e.blink = 2 + Math.random() * 5; _m4.lookAt(camera.position, e.p, UPV); _m4.scale(_v3.set(e.s, e.blink < 0.12 ? e.s * 0.12 : e.s, e.s)); _m4.setPosition(e.p); for (const m of L.eyeMeshes) m.setMatrixAt(e.i, _m4); ch = true; } } if (ch) for (const m of L.eyeMeshes) m.instanceMatrix.needsUpdate = true; }
   if (L.caustics) { L.caustics[0].offset.set(L.time * 0.013, L.time * 0.007); L.caustics[1].offset.set(-L.time * 0.009, L.time * 0.011); }
   if (L.waterN) L.waterN.offset.set(L.time * 0.021, L.time * 0.013);
   // shifting walls

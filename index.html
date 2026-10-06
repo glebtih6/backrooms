@@ -5944,9 +5944,12 @@ body.touch #hBoss{top:calc(62px + env(safe-area-inset-top))}
 #hBoss .b{height:9px;border:1px solid #ff6a5a;margin-top:4px;background:rgba(40,0,0,.6)}
 #hBoss .b i{display:block;height:100%;background:linear-gradient(90deg,#8a0010,#ff3040);transition:width .25s}
 #hBoss small{display:block;font-size:11px;letter-spacing:.05em;color:#fcc;margin-top:3px}
+#hHit{position:fixed;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;z-index:12;pointer-events:none;opacity:0;background:linear-gradient(45deg,transparent 46%,#ff3a2a 46%,#ff3a2a 54%,transparent 54%),linear-gradient(-45deg,transparent 46%,#ff3a2a 46%,#ff3a2a 54%,transparent 54%);filter:drop-shadow(0 0 3px #000)}
+#hHit.on{animation:hhit .35s ease-out}
+@keyframes hhit{0%{opacity:1;transform:scale(1.3)}100%{opacity:0;transform:scale(.8)}}
 #hJs{position:fixed;inset:0;z-index:35;pointer-events:none;opacity:0}
 </style>
-<div id="hAmmo" class="hidden"></div><div id="hBoss" class="hidden"></div><div id="hJs"></div>
+<div id="hAmmo" class="hidden"></div><div id="hHit"></div><div id="hBoss" class="hidden"></div><div id="hJs"></div>
 <script>
 // ====================== HUNT: shotgun, killable monsters, per-level devices, the Heart boss, scarier jumpscares ======================
 // Everything host-authoritative in co-op (monster HP, devices, the Heart); each player owns their own gun and shells.
@@ -6001,13 +6004,14 @@ function hRayMon(o, d, m) {
   const t = ((m.x - o.x) * d.x + (m.z - o.z) * d.z) / l2; if (t <= 0.2 || t > 32) return null;
   const px = o.x + d.x * t, py = o.y + d.y * t, pz = o.z + d.z * t, lat = Math.hypot(px - m.x, pz - m.z);
   const up = m.kind === 'crawler' && (m.climb || 0) > 0.3, top = up ? L.H + 0.3 : (m.kind === 'crawler' ? 1.2 : (m.height || 2) + 0.2), bot = up ? L.H - 1.5 : -0.3;
-  if (lat > (m.radius || 0.6) * 0.9 + 0.25 || py < bot || py > top) return null;
-  const n = Math.sqrt(l2); if (!losClear(o.x, o.z, m.x - d.x / n * 0.6, m.z - d.z / n * 0.6)) return null;
+  const hd = Math.hypot(m.x - o.x, m.z - o.z); // generous hitbox: body radius + slack that grows with distance
+  if (lat > (m.radius || 0.6) + 0.55 + hd * 0.035 || py < bot - 0.5 || py > top + 0.5) return null;
+  const n = Math.sqrt(l2); if (!losClear(o.x, o.z, m.x - d.x / n * 1.0, m.z - d.z / n * 1.0) && !losClear(o.x, o.z, m.x, m.z)) return null;
   return { t, x: px, y: py, z: pz };
 }
 function hRaySphere(o, d, c, r) { const ox = o.x - c.x, oy = o.y - c.y, oz = o.z - c.z, b = ox * d.x + oy * d.y + oz * d.z, cc = ox * ox + oy * oy + oz * oz - r * r, h = b * b - cc; if (h < 0) return null; const t = -b - Math.sqrt(h); return t > 0.1 ? t : null; }
 function hWallHit(o, d, maxT) { for (let t = 0.3; t < (maxT || 30); t += 0.2) { const x = o.x + d.x * t, z = o.z + d.z * t, y = o.y + d.y * t; if (y < 0.02 || y > L.H - 0.02) return { t, x, y: clamp(y, 0.05, L.H - 0.05), z }; if (L.solid(Math.round(x / T), Math.round(z / T))) return { t, x, y, z }; } return null; }
-const hFall = (t) => (t <= 3 ? 1 : Math.max(0, 1 - (t - 3) / 9));
+const hFall = (t) => (t <= 6 ? 1 : Math.max(0.15, 1 - (t - 6) / 14));
 // shot resolution (host): o/d = shooter eye + aim, lit = shooter's flashlight on
 function hResolveShot(o, d, lit, remote) {
   const ms = hMons(), hits = new Map(), sacs = new Map(), nodes = new Map(), tmp = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
@@ -6026,7 +6030,14 @@ function hResolveShot(o, d, lit, remote) {
     else if (best && best.node) { const e = nodes.get(best.node) || { n: 0 }; e.n += hFall(best.h.t); nodes.set(best.node, e); }
     else if (wh && wallFx < 3) { wallFx++; sparks(wh.x, wh.y, wh.z, 4, 0xffd080); puff(wh.x, wh.y, wh.z, 2, 0x777060, 0.4, 0.6); }
   }
+  if (!hits.size) { // aim assist: a monster within ~7° of the crosshair counts as hit by part of the spread
+    let best = null, ba = 0.12; for (const m of ms) { if (!m.alive || m.hDeadT != null) continue; const cy = m.kind === 'crawler' ? ((m.climb || 0) > 0.3 ? L.H - 0.6 : 0.5) : (m.height || 2) * 0.6, dx = m.x - o.x, dy = cy - o.y, dz = m.z - o.z, dist = Math.hypot(dx, dy, dz); if (dist > 22 || dist < 0.3) continue;
+      const a = Math.acos(clamp((dx * d.x + dy * d.y + dz * d.z) / dist, -1, 1)); if (a < ba && (losClear(o.x, o.z, m.x - dx / dist, m.z - dz / dist) || losClear(o.x, o.z, m.x, m.z))) { ba = a; best = { m, t: dist, x: m.x, y: cy, z: m.z }; } }
+    if (best) hits.set(best.m, { n: 4 * hFall(best.t), t: best.t, h: best });
+  }
+  if (hits.size || sacs.size || nodes.size) hHitMark(remote);
   for (const [m, e] of hits) {
+    if (m.hDeadT == null && m.alive) { const kx = m.x - o.x, kz = m.z - o.z, kd = Math.hypot(kx, kz) || 1, nx = m.x + kx / kd * 0.6, nz = m.z + kz / kd * 0.6; if (!L.solid(Math.round(nx / T), Math.round(nz / T))) { m.x = nx; m.z = nz; } }
     if (!hVuln(m)) { // armour / not in this world / no skin to tear: the shot only makes it furious
       sparks(e.h.x, e.h.y, e.h.z, 12, m.kind === 'glitch' ? 0x9fe8ff : 0xffe0a0); if (m.kind === 'glitch') AU.zap({ x: m.x, y: 1.5, z: m.z });
       const st = { smiler: 1.6, crawler: 2.2, glitch: 1.2, flesh: 1.4 }[m.kind] || 1.5; m.stun = Math.max(m.stun || 0, st); m.hEnrage = 0; m.path = null; m.hFlinch = 0.5; if (m.kind === 'crawler') { m.climb = 0; m.climbTarget = 0; } AU.growl({ x: m.x, y: 1.5, z: m.z }, 0.7);
@@ -6047,6 +6058,7 @@ function hImmuneMsg(m) {
   if (L && L.boss) return 'Выстрел только оглушил его на пару секунд: у Сердца они бессмертны. Цель — само Сердце.';
   return 'Оглушён на пару секунд, но не ранен. ' + { smiler: 'Дробь отскакивает от Улыбаки. Заманите его в луч прожектора — там он каменеет и становится уязвим.', crawler: 'Панцирь Ползуна не пробить. Найдите громкую колонку: от её рёва он свернётся и раскроет брюхо.', glitch: 'Дробь проходит сквозь Помеху — её нет в нашем мире. Ток из щитка на миг делает её плотной.', flesh: 'Шкура Мясной тени глотает дробь. Вырвите все нервные узлы — шкура слезет.' }[m.kind] || 'Дробь не берёт его.';
 }
+function hHitMark(remote) { if (remote) { if (hNet()) coopSend({ t: 'hmark', ls: L.seed }); return; } const el = $('hHit'); if (!el) return; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); AU.tone({ freq: 1500, freqEnd: 900, dur: 0.07, gain: 0.12, wave: 'square' }); if (window.buzz) buzz(25, true); }
 function hNetMsg(t) { msg(t); if (hNet()) coopSend({ t: 'msg', s: t }); }
 // ---------------- monster damage / death (host) ----------------
 function hInitHp(m) { if (m.hHp != null) return; m.hMax = Math.round((HUNT.hp[m.kind] || 15) * hDiffK() * (L && L.boss ? 1.4 : 1)); m.hHp = m.hMax; if (m.kind === 'flesh' && m.hArmor == null) m.hArmor = 0.55; }
@@ -6589,6 +6601,7 @@ if (HCO) {
     switch (d.t) {
       case 'hshot': { L.hShotsN = (L.hShotsN || 0) + 1; const x = COOP.R.x - Math.sin(COOP.R.yaw) * 0.5, z = COOP.R.z - Math.cos(COOP.R.yaw) * 0.5; sparks(x, 1.35, z, 6, 0xffc070); HSND.boom({ x, y: 1.4, z }); if (host && Array.isArray(d.o) && Array.isArray(d.d)) { const o = new THREE.Vector3().fromArray(d.o), v = new THREE.Vector3().fromArray(d.d).normalize(); hResolveShot(o, v, !!d.lit, true); } return; }
       case 'hhit': if (!host && M[d.mi]) { const m = M[d.mi]; m.hFlinch = 0.3; hBloodFx(m.kind, d.p[0], d.p[1], d.p[2], Math.min(18, 4 + (d.n || 2) * 2)); } return;
+      case 'hmark': hHitMark(false); return;
       case 'hkill': if (!host && M[d.mi]) hKill(M[d.mi], true, !!d.pm); return;
       case 'hrev': if (!host && M[d.mi]) hRevive(M[d.mi], true); return;
       case 'htake': if (host && it && it.kind === 'hpick') { if (it.active) { hPickHide(it); coopSend({ t: 'htook', ls: L.seed, i: d.i, by: 'g' }); } else coopSend({ t: 'htook', ls: L.seed, i: d.i, by: 'x' }); } return;

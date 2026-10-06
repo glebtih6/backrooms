@@ -1,6 +1,6 @@
 // Backrooms — offline cache: page = network-first with a short timeout (updates arrive, but a dead or
 // whitelisted mobile network never leaves the game hanging), assets = cache-first
-const CACHE = 'backrooms-v13';
+const CACHE = 'backrooms-v14';
 const ASSETS = ['./', './index.html', './three.min.js', './peerjs.min.js', './qr.min.js', './manifest.json', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png'];
 const NAV_TIMEOUT = 3500;
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())); });

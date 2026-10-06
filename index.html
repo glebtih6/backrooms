@@ -2306,7 +2306,7 @@ function startLevel(idx, opts) {
   if (!DEBUG.autostart) {
     $('introT').textContent = (G.loop && idx === 0 ? 'УРОВЕНЬ 0?' : L.cfg.name.toUpperCase()) + ' — ' + L.cfg.title.toUpperCase(); $('introS').textContent = G.loop && idx === 0 ? 'Ты уже был здесь. Или нет? (цикл ' + G.loop + ')' : L.cfg.sub;
     $('intro').classList.remove('hidden'); $('intro').style.opacity = 1; clearTimeout(G.introTO); G.introTO = setTimeout(() => $('intro').classList.add('hidden'), 4200);
-    setTimeout(() => msg('Найдите ' + L.cfg.item.many.toLowerCase() + ': ' + L.need + ' шт., затем ищите ВЫХОД.'), 1500);
+    setTimeout(() => msg(L.boss ? 'Вырвите ядра (' + L.need + ' шт.), уничтожьте Сердце, затем бегите к ВЫХОДУ.' : 'Найдите ' + L.cfg.item.many.toLowerCase() + ': ' + L.need + ' шт., затем ищите ВЫХОД.'), 1500);
     if (idx === 0 && !G.loop) setTimeout(() => msg('Подсказка: Улыбака двигается, только когда вы НЕ смотрите на него.'), 6000);
     if (idx === 1) setTimeout(() => msg(TOUCH.on ? 'Подсказка: Ползун слепой и охотится на звук. Приседайте или замрите — он потеряет вас. Бутылки отвлекают.' : 'Подсказка: Ползун слепой и охотится на звук. Приседайте (C) или замрите — он потеряет вас. Бутылки (Q) отвлекают.'), 6000);
     if (idx === 2) setTimeout(() => msg('Подсказка: Помеха видит свет фонарика. Выключите его, чтобы оторваться, а лучше заманите её в портал.'), 6000);
@@ -3053,7 +3053,7 @@ function updateDirector(dt) {
     _start(idx, opts);
     if (!opts.fromCP) G.levelTime = 0; G.dirT = 25 + Math.random() * 15; L.finale = null; $('finale').classList.add('hidden'); G.redAsk = -99;
     if (G.radioOn && P.radio) radioStatic(true);
-    if (L.boss && !DEBUG.autostart) setTimeout(() => msg('Вырвите 4 ядра из Сердца. Все четверо проснутся — один за другим…'), 2500);
+    if (L.boss && !DEBUG.autostart) setTimeout(() => msg('В центре бьётся Сердце Закулисья под щитом. Вырвите 4 ядра — щит падёт, и проснутся все четверо. Потом уничтожьте Сердце: пока оно бьётся, двери запечатаны.'), 2500);
     if (!opts.fromCP) saveCheckpoint('start');
   };
   const _use = useInteract;
@@ -3264,18 +3264,20 @@ function qaTest() {
       await tryEnd('redPortal(confirm)', () => { const rp = L.inter.find((i) => i.kind === 'redportal'); useInteract(rp); }, 'host');
       { hideAll(); startLevel(2, { seed: 4 }); G.state = 'play'; const rp = L.inter.find((i) => i.kind === 'redportal'); useInteract(rp); G.time += 5; useInteract(rp); const timedOut = G.state === 'play'; results.push('redPortal confirm expires=' + timedOut); if (!timedOut) fails.push('redportal timeout'); }
       { hideAll(); startLevel(3, { seed: 4 }); G.state = 'play'; L.collected = L.need; useInteract(L.exit); await wait(1600); results.push('L3 exit -> level ' + G.levelIdx + (G.levelIdx === 4 ? ' (boss) OK' : ' FAIL')); if (G.levelIdx !== 4) fails.push('L3->L4'); }
-      await tryEnd('L4exit', () => { startLevel(4, { seed: 4 }); G.state = 'play'; L.collected = L.need; useInteract(L.exit); }, 'escape');
+      await tryEnd('L4exit', () => { startLevel(4, { seed: 4 }); G.state = 'play'; L.collected = L.need; if (L.heart) L.heart.alive = false; useInteract(L.exit); }, 'escape');
       { // boss: all four monsters, cores -> finale, true exit locked until heart torn out
         hideAll(); G.godmode = true; startLevel(4, { seed: 4 }); G.state = 'play'; const kinds = L.monsters.map((q) => q.kind).sort().join('+');
         const te = L.inter.find((i) => i.kind === 'trueexit'); const keep = SAVE.notes.slice(); SAVE.notes = [0, 1, 2, 3, 4, 5, 6, 7]; useInteract(te); const lockedHeart = G.state === 'play'; SAVE.notes = keep;
-        const cores = L.inter.filter((i) => i.objective); let finaleAt = -1; cores.forEach((c, k) => { P.x = c.x; P.z = c.z; useInteract(c); if (L.finale && finaleAt < 0) finaleAt = k + 1; });
-        results.push('boss monsters=' + kinds + ' cores=' + cores.length + ' finaleAfter=' + finaleAt + ' trueexitLockedWhileHeartBeats=' + lockedHeart + ' exitSign=' + L.collected + '/' + L.need);
-        if (kinds !== 'crawler+flesh+glitch+smiler' || finaleAt !== cores.length || !lockedHeart) fails.push('boss setup');
+        const cores = L.inter.filter((i) => i.objective); let awakeAt = -1; cores.forEach((c, k) => { P.x = c.x; P.z = c.z; useInteract(c); if (L.heart && L.heart.awake && awakeAt < 0) awakeAt = k + 1; });
+        const noFinaleYet = !L.finale; useInteract(L.exit); const exitSealed = G.state === 'play';
+        for (const s of L.heart.sacs) window.__hunt.hSacDamage(s, 99); await wait(2600); const finaleAt = L.finale ? cores.length : -1;
+        results.push('boss monsters=' + kinds + ' cores=' + cores.length + ' heartAwakeAfter=' + awakeAt + ' noFinaleBeforeHeartDies=' + noFinaleYet + ' exitSealedWhileHeartBeats=' + exitSealed + ' finaleAfterHeart=' + !!L.finale + ' trueexitLockedWhileHeartBeats=' + lockedHeart + ' exitSign=' + L.collected + '/' + L.need);
+        if (kinds !== 'crawler+flesh+glitch+smiler' || awakeAt !== cores.length || !noFinaleYet || !exitSealed || finaleAt !== cores.length || !lockedHeart) fails.push('boss setup');
         let errs = 0; try { for (let i = 0; i < 200; i++) { G.time += 0.05; updateWorld(0.05); updateDirector(0.05); } } catch (e) { errs++; results.push('finale tick err ' + e.message); }
         results.push('finale timer=' + L.finale.t.toFixed(1) + ' hud=' + JSON.stringify($('finale').textContent)); if (errs || !(L.finale.t < 90 && L.finale.t > 70)) fails.push('finale tick'); G.godmode = false; }
       await tryEnd('finaleCollapse', () => { G.godmode = false; L.finale.t = 0.05; for (let i = 0; i < 3; i++) updateDirector(0.05); for (let i = 0; i < 60 && G.state === 'jumpscare'; i++) updateJumpscare(0.05); }, 'death');
       results.push('collapse text=' + (/Сердце/.test($('endStory').textContent) ? 'OK' : 'FAIL')); if (!/Сердце/.test($('endStory').textContent)) fails.push('collapse text');
-      await tryEnd('trueExit(boss,8 notes,cores)', () => { startLevel(4, { seed: 4 }); G.state = 'play'; L.collected = L.need; const keep = SAVE.notes.slice(); SAVE.notes = [0, 1, 2, 3, 4, 5, 6, 7]; const te = L.inter.find((i) => i.kind === 'trueexit'); useInteract(te); setTimeout(() => { SAVE.notes = keep; saveGame(); }, 2500); }, 'true');
+      await tryEnd('trueExit(boss,8 notes,cores)', () => { startLevel(4, { seed: 4 }); G.state = 'play'; L.collected = L.need; if (L.heart) L.heart.alive = false; const keep = SAVE.notes.slice(); SAVE.notes = [0, 1, 2, 3, 4, 5, 6, 7]; const te = L.inter.find((i) => i.kind === 'trueexit'); useInteract(te); setTimeout(() => { SAVE.notes = keep; saveGame(); }, 2500); }, 'true');
       { hideAll(); startLevel(4, { seed: 4 }); G.state = 'play'; L.collected = L.need; const keep = SAVE.notes.slice(); SAVE.notes = [0, 1]; const te = L.inter.find((i) => i.kind === 'trueexit'); useInteract(te); const locked = G.state === 'play'; results.push('trueExit(2 notes) locked=' + locked); if (!locked) fails.push('trueexit lock'); SAVE.notes = keep; }
       await tryEnd('steamDeath', () => { startLevel(1, { seed: 4 }); G.state = 'play'; G.godmode = false; const v = L.vents[0]; v.on = 1; v.t = 0; P.x = v.x; P.z = v.z; for (let i = 0; i < 800 && G.state === 'play'; i++) { G.time += 0.05; P.x = v.x; P.z = v.z; updatePlayer(0.05); updateWorld(0.05); } for (let i = 0; i < 60 && G.state === 'jumpscare'; i++) updateJumpscare(0.05); }, 'death');
       results.push('death cause text=' + (/Пар/.test($('endStory').textContent) ? 'steam OK' : 'other'));
@@ -5928,6 +5930,7 @@ body.hgun #cross{width:20px;height:20px;margin:-10px 0 0 -10px;background:none;b
 body.hgun #cross::after{content:'';position:absolute;left:7px;top:7px;width:2px;height:2px;background:#fff;border-radius:50%}
 #tbFire{right:calc(122px + env(safe-area-inset-right));bottom:calc(192px + env(safe-area-inset-bottom));width:76px;height:76px;border-color:rgba(255,190,120,.8);color:#ffe2b0}
 #tbHRel{right:calc(214px + env(safe-area-inset-right));bottom:calc(118px + env(safe-area-inset-bottom));border-color:rgba(255,190,120,.8);color:#ffe2b0;font-size:20px}
+body.touch #hBoss{top:calc(62px + env(safe-area-inset-top))}
 #hBoss{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translateX(-50%);z-index:11;pointer-events:none;text-align:center;font:bold 14px "Courier New",monospace;color:#ffb0a0;letter-spacing:.18em;text-shadow:0 0 8px #f00,0 0 2px #000;width:min(420px,70vw)}
 #hBoss .b{height:9px;border:1px solid #ff6a5a;margin-top:4px;background:rgba(40,0,0,.6)}
 #hBoss .b i{display:block;height:100%;background:linear-gradient(90deg,#8a0010,#ff3040);transition:width .25s}
@@ -6297,7 +6300,7 @@ function hBuildHeart(Lv, rng) {
   const D = (o) => { Lv.disp.push(o); return o; }, cx = A.cx * T, cz = A.cy * T, g = new THREE.Group(); g.position.set(cx, 0, cz); Lv.group.add(g);
   const id = Lv.wallIndex[Lv.I(A.cx, A.cy)]; if (id >= 0) { Lv.wallMesh.setMatrixAt(id, ZERO_M4); Lv.wallMesh.instanceMatrix.needsUpdate = true; } Lv.unbreak[Lv.I(A.cx, A.cy)] = 1;
   const fleshT = D(TEX.skin ? TEX.skin('#7a1018', 'rgba(255,90,90,0.35)') : null);
-  const hm = D(new THREE.MeshLambertMaterial({ color: 0xb02030, emissive: 0x3a0408, map: fleshT || null }));
+  const hm = D(new THREE.MeshLambertMaterial({ color: 0x8a1a22, emissive: 0x1c0204, map: fleshT || null }));
   const geo = D(new THREE.IcosahedronGeometry(1.75, 3)); const pa = geo.attributes.position, v = new THREE.Vector3();
   for (let i = 0; i < pa.count; i++) { v.fromBufferAttribute(pa, i); const n = 1 + 0.09 * Math.sin(v.x * 3.1 + v.y * 2.3) + 0.07 * Math.sin(v.z * 4.7 - v.y * 1.7); v.multiplyScalar(n); v.y *= 1.15; pa.setXYZ(i, v.x, v.y, v.z); } geo.computeVertexNormals();
   const heart = new THREE.Mesh(geo, hm); heart.position.y = 1.95; g.add(heart);
@@ -6305,7 +6308,7 @@ function hBuildHeart(Lv, rng) {
   for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 + rng() * 0.4, len = Lv.H, c = new THREE.Mesh(D(new THREE.CylinderGeometry(0.1, 0.22, len, 6)), vein); c.position.set(Math.cos(a) * 1.1, 1.95 + (i % 2 ? 0.9 : -0.9), Math.sin(a) * 1.1); c.rotation.z = Math.cos(a) * 0.5; c.rotation.x = Math.sin(a) * 0.5; g.add(c); }
   for (let i = 0; i < 7; i++) { const a = rng() * Math.PI * 2, r0 = new THREE.Mesh(D(new THREE.CylinderGeometry(0.06, 0.32, 2.4, 6)), vein); r0.position.set(Math.cos(a) * 1.8, 0.2, Math.sin(a) * 1.8); r0.rotation.z = Math.PI / 2 - 0.25; r0.rotation.y = -a; g.add(r0); }
   const shield = new THREE.Mesh(D(new THREE.SphereGeometry(2.55, 24, 16)), D(new THREE.MeshBasicMaterial({ color: 0xff2040, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }))); shield.position.y = 1.95; g.add(shield);
-  const glow = new THREE.Sprite(D(new THREE.SpriteMaterial({ map: GLOW_TEX, color: 0xff2030, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.5 }))); glow.scale.setScalar(7); glow.position.y = 1.95; g.add(glow);
+  const glow = new THREE.Sprite(D(new THREE.SpriteMaterial({ map: GLOW_TEX, color: 0xff2030, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.5 }))); glow.scale.setScalar(4.6); glow.position.y = 1.95; g.add(glow);
   const sacs = [], sm = D(new THREE.MeshBasicMaterial({ color: 0xffd040 }));
   [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dz], k) => {
     const mesh = new THREE.Mesh(D(new THREE.SphereGeometry(0.36, 12, 8)), sm.clone()); D(mesh.material); const y = 1.5 + (k % 2) * 0.7; mesh.position.set(dx * 1.72, y, dz * 1.72); g.add(mesh);
@@ -6346,7 +6349,7 @@ function hHeartDie(fromNet) {
 function hHeartTick(dt) {
   const h = L && L.heart; if (!h) return;
   h.beat += dt * (h.awake ? 2.2 : 1.2); const b = Math.pow(Math.max(0, Math.sin(h.beat * Math.PI)), 6);
-  if (h.alive) { const s = 1 + b * 0.07 + (h.tele > 0 ? 0.08 * Math.random() : 0); h.heart.scale.setScalar(s); h.glow.material.opacity = 0.35 + b * 0.4 + (h.tele > 0 ? 0.5 : 0); h.shield.visible = !h.awake; h.shield.material.opacity = 0.12 + b * 0.12 + 0.04 * (L.need - L.collected); h.shield.rotation.y += dt * 0.3;
+  if (h.alive) { const s = 1 + b * 0.07 + (h.tele > 0 ? 0.08 * Math.random() : 0); h.heart.scale.setScalar(s); h.glow.material.opacity = 0.12 + b * 0.3 + (h.tele > 0 ? 0.55 : 0); h.shield.visible = !h.awake; h.shield.material.opacity = 0.12 + b * 0.12 + 0.04 * (L.need - L.collected); h.shield.rotation.y += dt * 0.3;
     for (const s of h.sacs) if (s.hp > 0) { const k = 1 + b * 0.25; s.mesh.scale.setScalar(k * (0.6 + 0.4 * s.hp / s.max)); s.mesh.material.color.setHSL(0.12 * s.hp / s.max, 1, 0.55); }
     const d = Math.hypot(P.x - h.cx, P.z - h.cz); if (d < 30 && (h.bt || 0) < G.time && b > 0.9) { h.bt = G.time + 0.5; AU.heartbeat(Math.max(0.1, 0.6 * (1 - d / 30))); }
   } else if (h.dieT >= 0) {
@@ -6451,7 +6454,6 @@ function hPrompt(it) {
     opts = opts || {}; const me = hMe();
     if (opts.newGame && !(HCO && COOP.on && P !== COOP.me)) { me.hGun = false; me.hAmmo = 0; me.hRes = 0; }
     HUNT.reloadT = 0; const r = _sl(idx, opts); $('hBoss').classList.add('hidden');
-    if (L && L.boss && L.heart && !DEBUG.autostart) setTimeout(() => { if (L && L.heart) msg('В центре уровня бьётся Сердце под щитом. Вырвите 4 ядра — щит падёт. Потом уничтожьте Сердце, иначе выход не откроется.'); }, 6000);
     return r;
   };
   const _sc = saveCheckpoint; saveCheckpoint = function (reason) { const r = _sc(reason); if (SAVE.cp && L && !(HCO && COOP.on)) { const me = hMe(); SAVE.cp.h = { g: !!me.hGun, a: me.hAmmo | 0, r: me.hRes | 0, pk: L.inter.map((it, i) => (it.kind === 'hpick' || it.kind === 'hnode') && !it.active ? i : -1).filter((i) => i >= 0) }; saveGame(); } return r; };
@@ -6558,6 +6560,148 @@ function hEyesTick(dt) {
 { const _uw = updateWorld; updateWorld = function (dt) { _uw(dt); if (L) try { hEyesTick(dt); } catch (e) { } }; }
 window.__hunt = { HUNT, hShoot, hReload, hResolveShot, hDamage, hKill, hPickApply, hHeartWake, hHeartDie, hSacDamage, hPulse };
 </script><!--/HUNT-->
+<!--FEAR--><style>
+#fFace{position:fixed;inset:0;z-index:34;pointer-events:none;display:flex;align-items:center;justify-content:center;opacity:0;background:rgba(0,0,0,.88)}
+#fFace canvas{width:min(80vh,80vw);height:min(80vh,80vw);filter:contrast(1.4) blur(.6px)}
+#fWhisper{position:fixed;left:50%;top:62%;transform:translateX(-50%);z-index:26;pointer-events:none;font:italic 22px Georgia,serif;color:#d8c8c8;text-shadow:0 0 10px #000,0 0 3px #000;letter-spacing:.3em;opacity:0;transition:opacity .6s}
+</style>
+<div id="fFace"><canvas width="256" height="256"></canvas></div><div id="fWhisper"></div>
+<script>
+// ====================== FEAR: sanity, hallucinations, dread sounds, darker world, flashlight that dies near monsters ======================
+// All local to the player who experiences it — in co-op your partner does not see your hallucinations.
+'use strict';
+const FEAR = { t: 0, lit: true, litT: 0, hallT: 25, dreadT: 14, faceT: 0, turn: null, peri: null, chase: null, flick: 0, lastAlm: 0 };
+function fearOn() { return !(typeof isCute === 'function' && isCute()) && !TESTING; }
+function fearK() { const d = typeof COOP !== 'undefined' && COOP.on ? COOP.diff : SAVE.settings.diff; return { easy: 0.6, nightmare: 1.45 }[d] || 1; }
+function fMe() { return typeof COOP !== 'undefined' && COOP.on ? COOP.me : P; }
+function fMons() { return L ? (L.monsters || [L.monster]).filter((m) => m && m.alive) : []; }
+// ---------------- procedural creepy face (for the rare face flash) ----------------
+function fDrawFace() {
+  const cv = $('fFace').querySelector('canvas'), g = cv.getContext('2d'), w = 256, h = 256; g.clearRect(0, 0, w, h);
+  const bg = g.createRadialGradient(128, 120, 10, 128, 128, 130); bg.addColorStop(0, 'rgba(0,0,0,0)'); bg.addColorStop(1, 'rgba(0,0,0,0.9)'); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+  g.save(); g.translate(128, 132); g.scale(1, 1.32); const sk = g.createRadialGradient(-10, -20, 6, 0, 0, 78); sk.addColorStop(0, '#d9d2c4'); sk.addColorStop(0.6, '#9a9286'); sk.addColorStop(1, '#2a2622'); g.fillStyle = sk; g.beginPath(); g.ellipse(0, 0, 66, 74, 0, 0, Math.PI * 2); g.fill(); g.restore();
+  for (const s of [-1, 1]) { const e = g.createRadialGradient(128 + s * 30, 104, 2, 128 + s * 30, 104, 26); e.addColorStop(0, '#000'); e.addColorStop(0.7, '#050404'); e.addColorStop(1, 'rgba(20,16,14,0)'); g.fillStyle = e; g.beginPath(); g.ellipse(128 + s * 30, 104, 22, 28, s * 0.25, 0, Math.PI * 2); g.fill(); g.fillStyle = '#fff6d0'; g.beginPath(); g.arc(128 + s * 30 + (Math.random() - 0.5) * 6, 106, 2.2, 0, 7); g.fill(); g.strokeStyle = 'rgba(10,6,6,.8)'; g.lineWidth = 2; g.beginPath(); g.moveTo(128 + s * 30, 132); g.lineTo(128 + s * 26, 168); g.stroke(); }
+  g.fillStyle = '#060303'; g.beginPath(); g.moveTo(66, 178); g.quadraticCurveTo(128, 238, 190, 178); g.quadraticCurveTo(128, 206, 66, 178); g.fill();
+  g.fillStyle = '#e8e0c8'; for (let i = 0; i < 18; i++) { const x = 72 + i * 6.6, y = 178 + Math.sin((i / 17) * Math.PI) * 15; g.beginPath(); g.moveTo(x - 2.6, y); g.lineTo(x, y + 8 + Math.random() * 7); g.lineTo(x + 2.6, y); g.fill(); }
+  const id = g.getImageData(0, 0, w, h), d = id.data; for (let i = 0; i < d.length; i += 4) { const n = (Math.random() - 0.5) * 40; d[i] += n; d[i + 1] += n; d[i + 2] += n; } g.putImageData(id, 0, 0);
+}
+// ---------------- sounds ----------------
+const FSND = {
+  whisper(pos, n) { for (let i = 0; i < (n || 7); i++) AU.nz({ type: 'bandpass', freq: 1800 + Math.random() * 2200, Q: 7, dur: 0.15 + Math.random() * 0.25, gain: 0.09, delay: i * 0.17, pos }); },
+  breath(pos, g) { for (let i = 0; i < 3; i++) { AU.nz({ type: 'bandpass', freq: 600, freqEnd: 900, Q: 1.2, dur: 0.9, gain: (g || 0.14), delay: i * 1.9, pos }); AU.nz({ type: 'bandpass', freq: 800, freqEnd: 500, Q: 1.2, dur: 0.8, gain: (g || 0.14) * 0.8, delay: i * 1.9 + 1.0, pos }); } },
+  scream(pos) { AU.nz({ type: 'bandpass', freq: 1400, freqEnd: 2600, Q: 3, dur: 1.6, gain: 0.25, pos }); AU.tone({ freq: 700, freqEnd: 1100, dur: 1.4, gain: 0.06, wave: 'sawtooth', lp: 2400, pos }); AU.nz({ type: 'bandpass', freq: 2400, freqEnd: 600, Q: 2, dur: 1.2, gain: 0.18, delay: 1.3, pos }); },
+  bang(pos) { AU.nz({ type: 'lowpass', freq: 600, freqEnd: 90, dur: 0.6, gain: 0.7, pos }); AU.tone({ freq: 70, freqEnd: 40, dur: 0.5, gain: 0.35, pos }); },
+  scratch(pos) { for (let i = 0; i < 9; i++) AU.nz({ type: 'bandpass', freq: 3000 + Math.random() * 2500, freqEnd: 1200, Q: 8, dur: 0.12 + Math.random() * 0.1, gain: 0.12, delay: i * 0.11 + Math.random() * 0.05, pos }); },
+  drip(pos) { for (let i = 0; i < 4; i++) AU.tone({ freq: 1400 + Math.random() * 600, freqEnd: 700, dur: 0.07, gain: 0.08, wave: 'sine', delay: i * (0.6 + Math.random() * 0.5), pos }); },
+  cry(pos) { for (let i = 0; i < 4; i++) AU.tone({ freq: 520 + Math.random() * 80, freqEnd: 380, dur: 0.7, gain: 0.05, wave: 'triangle', lp: 1500, delay: i * 0.9, pos }); },
+  run(pos0, dir) { for (let i = 0; i < 9; i++) { const k = i / 8, p = { x: pos0.x + dir.x * k, y: 0.1, z: pos0.z + dir.z * k }; AU.step(L.cfg.surface, 0.5 + k * 0.7, p); } },
+  ring() { AU.tone({ freq: 3600, dur: 3.5, gain: 0.02, wave: 'sine', attack: 1 }); },
+  sting() { AU.nz({ type: 'bandpass', freq: 900, freqEnd: 5000, Q: 1.4, dur: 0.6, gain: 0.55 }); AU.tone({ freq: 160, freqEnd: 45, dur: 0.8, gain: 0.4, wave: 'sawtooth', lp: 1400 }); },
+};
+function fAround(d, back) { const a = P.yaw + (back ? Math.PI : 0) + (Math.random() - 0.5) * (back ? 0.8 : Math.PI * 2); return { x: P.x - Math.sin(a) * d, y: 1.5, z: P.z - Math.cos(a) * d }; }
+// ---------------- sanity ----------------
+function fIsLit() {
+  for (const f of L.fixtures) { if ((f.b || 0) < 0.4) continue; if (Math.abs(f.x - P.x) < 4.6 && Math.abs(f.z - P.z) < 4.6) return true; }
+  return false;
+}
+function fSanityTick(dt) {
+  const me = fMe(); if (me.san == null) me.san = 100;
+  FEAR.litT -= dt; if (FEAR.litT <= 0) { FEAR.litT = 0.25; FEAR.lit = fIsLit(); }
+  let d = 0; const k = fearK();
+  if (!FEAR.lit) d -= P.flashOn ? 0.35 : 1.4;
+  if (P.hidden) d -= 0.6;
+  for (const m of fMons()) { if (m.grace > 1e6) continue; const dist = Math.hypot(m.x - P.x, m.z - P.z); if (dist < 16) d -= 2.6 * (1 - dist / 16) * (m.state === 'chase' || m.state === 'hunt' ? 1.6 : 1); if (dist < 22 && m.group.visible && m.onScreen && m.onScreen()) d -= 3.2; }
+  if (L.boss) d -= 0.5; if (L.heart && L.heart.awake && L.heart.alive) d -= 0.6;
+  if (typeof COOP !== 'undefined' && COOP.on && COOP.linked && COOP.R.ready && !COOP.R.down && Math.hypot(COOP.R.x - P.x, COOP.R.z - P.z) < 6) { d *= 0.55; if (FEAR.lit) d += 1.2; }
+  if (d >= 0 && FEAR.lit && !P.hidden) d += 1.8; // calm, lit room: recover
+  me.san = clamp(me.san + (d < 0 ? d * k : d) * dt, 0, 100);
+}
+// ---------------- hallucinations ----------------
+function fWhisperText(t, ms) { const el = $('fWhisper'); el.textContent = t; el.style.opacity = 1; clearTimeout(fWhisperText.to); fWhisperText.to = setTimeout(() => { el.style.opacity = 0; }, ms || 1800); }
+function fFigure(x, z, kind, life) {
+  const tex = silhouetteTex(kind || (L.boss ? ['smiler', 'flesh', 'glitch'][Math.random() * 3 | 0] : L.cfg.monster)); const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: true, color: 0x8a8070 }));
+  const hgt = kind === 'smiler' ? 3.2 : 2.4; sp.scale.set(hgt * 0.5, hgt, 1); sp.center.set(0.5, 0); sp.position.set(x, 0, z); scene.add(sp);
+  return { sp, tex, t: 0, life: life || 6, seen: 0 };
+}
+function fKillFigure(f) { if (!f) return; scene.remove(f.sp); f.sp.material.dispose(); f.tex.dispose(); }
+function fRayFree(ang, maxD) { const fx = -Math.sin(ang), fz = -Math.cos(ang); let best = 0; for (let d = 1; d < maxD; d += 0.5) { if (L.solid(Math.round((P.x + fx * d) / T), Math.round((P.z + fz * d) / T))) break; best = d; } return best; }
+function fHallucinate(s) {
+  const opts = ['turn', 'peri', 'chase', 'scratch', 'flashdie', 'whisper']; if (s > 0.72 && G.time > FEAR.faceT) opts.push('face', 'face');
+  const ev = opts[Math.random() * opts.length | 0];
+  if (ev === 'turn' && !FEAR.turn) { const b = fAround(2.2, true); FSND.whisper(b, 9); fWhisperText('…обернись…', 2200); FEAR.turn = { t: 0, yaw0: P.yaw, done: false }; }
+  else if (ev === 'peri' && !FEAR.peri) { const side = Math.random() < 0.5 ? 1 : -1, ang = P.yaw + side * (0.85 + Math.random() * 0.25), d = fRayFree(ang, 14); if (d > 5) { const dd = d - 1; FEAR.peri = fFigure(P.x - Math.sin(ang) * dd, P.z - Math.cos(ang) * dd, null, 7); } }
+  else if (ev === 'chase') { const a = P.yaw + Math.PI, from = { x: P.x - Math.sin(a) * 14, z: P.z - Math.cos(a) * 14 }; FSND.run(from, { x: (P.x - from.x) * 0.85, z: (P.z - from.z) * 0.85 }); setTimeout(() => { if (G.state === 'play') { FSND.breath({ x: P.x + Math.sin(P.yaw) * 1.2, y: 1.6, z: P.z + Math.cos(P.yaw) * 1.2 }, 0.2); G.flashStatic = Math.max(G.flashStatic, 0.3); } }, 2600); }
+  else if (ev === 'scratch') { const a = P.yaw + (Math.random() < 0.5 ? 1 : -1) * Math.PI / 2; FSND.scratch({ x: P.x - Math.sin(a) * 1.6, y: 1.2, z: P.z - Math.cos(a) * 1.6 }); }
+  else if (ev === 'flashdie' && P.flashOn) { FEAR.flick = 2.2; FSND.breath(fAround(1.5, true), 0.16); }
+  else if (ev === 'face') { FEAR.faceT = G.time + 70; fDrawFace(); const el = $('fFace'); el.style.opacity = 1; FSND.sting(); G.flashStatic = 1; G.shake = Math.max(G.shake, 0.4); if (window.buzz) buzz([60, 30, 120], true); setTimeout(() => { el.style.opacity = 0; }, 140); }
+  else { FSND.whisper(fAround(3), 8); if (Math.random() < 0.5) fWhisperText(['…ты не выйдешь…', '…мы видим тебя…', '…останься…', '…оно за тобой…', '…не смотри назад…'][Math.random() * 5 | 0], 2000); }
+}
+function fHallTick(dt, s) {
+  if (FEAR.turn) { const tr = FEAR.turn; tr.t += dt; let dy = Math.abs(((P.yaw - tr.yaw0) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+    if (!tr.done && dy > 2.2) { tr.done = true; const d = fRayFree(P.yaw, 4); if (d > 1.6) { const fg = fFigure(P.x - Math.sin(P.yaw) * (Math.min(d, 2.6) - 0.3), P.z - Math.cos(P.yaw) * (Math.min(d, 2.6) - 0.3), 'smiler', 0.32); FEAR.turnFig = fg; } FSND.sting(); G.flashStatic = 1; G.shake = Math.max(G.shake, 0.5); if (window.buzz) buzz([90, 40, 90], true); }
+    if (tr.t > 4.5) { if (!tr.done) FSND.breath({ x: P.x + Math.sin(P.yaw) * 0.8, y: 1.6, z: P.z + Math.cos(P.yaw) * 0.8 }, 0.22); FEAR.turn = null; } }
+  if (FEAR.turnFig) { FEAR.turnFig.t += dt; if (FEAR.turnFig.t > FEAR.turnFig.life) { fKillFigure(FEAR.turnFig); FEAR.turnFig = null; } }
+  if (FEAR.peri) { const f = FEAR.peri; f.t += dt; const dx = f.sp.position.x - P.x, dz = f.sp.position.z - P.z, d = Math.hypot(dx, dz) || 1, look = (dx * -Math.sin(P.yaw) + dz * -Math.cos(P.yaw)) / d;
+    f.sp.material.opacity = 0.75 + Math.random() * 0.2; if (look > 0.9 || d < 3.5 || f.t > f.life) { if (look > 0.9) { FSND.whisper(f.sp.position, 4); G.flashStatic = Math.max(G.flashStatic, 0.35); } fKillFigure(f); FEAR.peri = null; } }
+  if (G.state !== 'play') return;
+  FEAR.hallT -= dt * (0.35 + s * 1.6); if (s > 0.42 && FEAR.hallT <= 0) { FEAR.hallT = 16 + Math.random() * 22; fHallucinate(s); }
+}
+// ---------------- ambient dread (independent of sanity) ----------------
+function fDreadTick(dt) {
+  FEAR.dreadT -= dt; if (FEAR.dreadT > 0) return; FEAR.dreadT = 10 + Math.random() * 16;
+  const lv = L.vs, far = fAround(18 + Math.random() * 12), mid = fAround(8 + Math.random() * 6);
+  const pool = [() => FSND.scream(far), () => FSND.bang(far), () => FSND.drip(mid), () => FSND.whisper(mid, 5)];
+  if (lv === 0) pool.push(() => AU.giggle(far), () => FSND.cry(far)); if (lv === 1) pool.push(() => FSND.bang(mid), () => AU.clicks(far, 10)); if (lv === 2) pool.push(() => FSND.drip(mid), () => FSND.cry(far)); if (lv === 3) pool.push(() => AU.growl(far, 0.6), () => FSND.scratch(mid));
+  pool[Math.random() * pool.length | 0]();
+}
+// ---------------- per-frame ----------------
+{
+  const _uw = updateWorld;
+  updateWorld = function (dt) {
+    _uw(dt); if (!L || !fearOn() || G.state !== 'play') return;
+    const me = fMe(); if (typeof COOP !== 'undefined' && COOP.on && me.down) return;
+    // darker world (lamps stay as they are, the ambient fill goes down)
+    hemi.intensity *= { easy: 0.85, nightmare: 0.6 }[typeof COOP !== 'undefined' && COOP.on ? COOP.diff : SAVE.settings.diff] || 0.72;
+    fSanityTick(dt); const s = 1 - me.san / 100; FEAR.s = s;
+    // the flashlight stutters when something is close (and when your mind slips)
+    let near = 99; for (const m of fMons()) if (!(m.grace > 1e6) && !(m.stun > 0)) near = Math.min(near, Math.hypot(m.x - P.x, m.z - P.z));
+    if (FEAR.flick > 0) FEAR.flick -= dt;
+    if (P.flashOn && flashlight.intensity > 0) { const k = near < 11 ? (1 - near / 11) : 0; if (FEAR.flick > 0 || Math.random() < dt * (k * 9 + (s > 0.6 ? (s - 0.6) * 4 : 0))) { flashlight.intensity *= FEAR.flick > 0 ? (Math.random() < 0.85 ? 0 : 0.6) : Math.random() * 0.25; if (Math.random() < 0.08) AU.flash(false); } }
+    fHallTick(dt, s); fDreadTick(dt);
+    if (s > 0.85 && (FEAR.ringT || 0) < G.time) { FEAR.ringT = G.time + 9; FSND.ring(); }
+    if (s > 0.55 && (FEAR.hbT || 0) < G.time) { FEAR.hbT = G.time + 1.4 - s; AU.heartbeat(0.25 + s * 0.4); }
+  };
+  const _gr = gfxRender;
+  gfxRender = function () {
+    if (L && fearOn() && (G.state === 'play' || G.state === 'pause') && FEAR.s > 0.25) {
+      const u = postMat.uniforms, s = (FEAR.s - 0.25) / 0.75;
+      u.chroma.value += s * 0.7; u.vig.value += s * 0.55; u.grain.value += s * 0.09; u.wobble.value += s * 0.9; if (s > 0.7) u.staticAmt.value = Math.max(u.staticAmt.value, (s - 0.7) * 0.5 * Math.random());
+    }
+    return _gr();
+  };
+  const _uh = updateHUD;
+  updateHUD = function (dt) {
+    const r = _uh(dt); if (!L) return r;
+    if (L.boss && L.heart && L.heart.alive && L.collected >= L.need) { const o = $('obj'); if (/ищите ВЫХОД/.test(o.innerHTML)) o.innerHTML = o.innerHTML.replace(/ищите ВЫХОД!?/, 'уничтожьте СЕРДЦЕ!'); }
+    const sb = $('sanbar'); if (sb) { const v = fearOn() ? fMe().san : 100; sb.style.display = fearOn() ? '' : 'none'; sb.lastElementChild.style.width = (v == null ? 100 : v) + '%'; sb.style.opacity = v < 30 ? (Math.sin(G.time * 8) > 0 ? 1 : 0.5) : 1; }
+    return r;
+  };
+  const _sl = startLevel;
+  startLevel = function (idx, opts) {
+    const r = _sl(idx, opts); const me = fMe(); if (opts && opts.newGame) me.san = 100; else me.san = Math.max(me.san == null ? 100 : me.san, 70);
+    fKillFigure(FEAR.peri); FEAR.peri = null; fKillFigure(FEAR.turnFig); FEAR.turnFig = null; FEAR.turn = null; FEAR.hallT = 30 + Math.random() * 20; FEAR.dreadT = 8; return r;
+  };
+  // almond water also steadies the mind
+  const almond = (it) => it && it.kind === 'item' && it.item === 'almond' && it.active;
+  const _ui = useInteract; useInteract = function (it) { const a = almond(it); const r = _ui(it); if (a && !it.active) { fMe().san = Math.min(100, (fMe().san || 0) + 40); msg('Миндальная вода успокаивает: рассудок восстановлен.'); } return r; };
+  if (typeof COOP !== 'undefined' && COOP.useInner) { const _in = COOP.useInner; COOP.useInner = function (it) { const a = almond(it); const r = _in(it); if (a && !it.active) fMe().san = Math.min(100, (fMe().san || 0) + 40); return r; }; }
+  // sanity bar in the HUD
+  const bars = $('bars'); if (bars && !$('sanbar')) { const d = document.createElement('div'); d.className = 'bar lbl'; d.id = 'sanbar'; d.innerHTML = '<span>РАССУДОК</span><i style="background:linear-gradient(90deg,#5a2a8a,#b07ae0)"></i>'; bars.appendChild(d); }
+  const _ch = controlsHTML; controlsHTML = function () { return _ch() + '<p style="margin-top:8px;color:#c9a"><b>Рассудок</b> падает в темноте, рядом с монстрами и в шкафчиках. Чем он ниже, тем сильнее искажается картинка — и тем чаще видишь то, чего нет. Восстанавливается на свету, рядом с напарником и от миндальной воды.</p>'; };
+}
+window.__fear = FEAR;
+</script><!--/FEAR-->
+
 
 <script>
 // ====================== PHONE POLISH: screen stays on, haptics, co-op link quality ======================

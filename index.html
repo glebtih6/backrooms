@@ -5942,7 +5942,7 @@ body.touch #hBoss{top:calc(62px + env(safe-area-inset-top))}
 // ====================== HUNT: shotgun, killable monsters, per-level devices, the Heart boss, scarier jumpscares ======================
 // Everything host-authoritative in co-op (monster HP, devices, the Heart); each player owns their own gun and shells.
 'use strict';
-const HUNT = { MAG: 2, MAXRES: 16, PEL: 8, hp: { smiler: 20, crawler: 12, glitch: 14, flesh: 30 }, names: { smiler: 'Улыбака', crawler: 'Ползун', glitch: 'Помеха', flesh: 'Мясная тень' }, shootT: 0, reloadT: 0, recoil: 0, flashT: 0, gun: null, arenaPending: null, js: 0 };
+const HUNT = { MAG: 2, MAXRES: 6, PEL: 8, hp: { smiler: 30, crawler: 22, glitch: 24, flesh: 40 }, names: { smiler: 'Улыбака', crawler: 'Ползун', glitch: 'Помеха', flesh: 'Мясная тень' }, shootT: 0, reloadT: 0, recoil: 0, flashT: 0, gun: null, arenaPending: null, js: 0 };
 const HCO = typeof COOP !== 'undefined';
 function huntOn() { return !(typeof isCute === 'function' && isCute()); }
 function hMons() { return L ? (L.monsters || [L.monster]).filter(Boolean) : []; }
@@ -5980,7 +5980,7 @@ function hGunTick(dt) {
   const g = HUNT.gun; if (!g) return; const on = hHasGun() && G.hand.visible && !P.hidden;
   g.visible = on; if (!on) { HUNT.flash.visible = false; return; }
   if (G.hand.position.x > 0) G.hand.position.x -= 0.46; // flashlight goes to the left hand
-  HUNT.recoil = Math.max(0, HUNT.recoil - dt * 5); const rl = HUNT.reloadT > G.time ? Math.sin(Math.PI * (1 - (HUNT.reloadT - G.time) / 1.6)) : 0;
+  HUNT.recoil = Math.max(0, HUNT.recoil - dt * 5); const rl = HUNT.reloadT > G.time ? Math.sin(Math.PI * (1 - (HUNT.reloadT - G.time) / 2.4)) : 0;
   g.position.set(0.2 + (G.hand.position.x + 0.24) * 0.6, G.hand.position.y - 0.04 - rl * 0.08, -0.42 + HUNT.recoil * 0.09);
   g.rotation.set(HUNT.recoil * 0.55 + rl * 0.9, -0.05, rl * 0.35);
   HUNT.flashT -= dt; const f = HUNT.flashT > 0; HUNT.flash.visible = f; if (f) { HUNT.flash.material.rotation = Math.random() * 6; flashlight.intensity = Math.max(flashlight.intensity, 5); }
@@ -5998,7 +5998,7 @@ function hRayMon(o, d, m) {
 }
 function hRaySphere(o, d, c, r) { const ox = o.x - c.x, oy = o.y - c.y, oz = o.z - c.z, b = ox * d.x + oy * d.y + oz * d.z, cc = ox * ox + oy * oy + oz * oz - r * r, h = b * b - cc; if (h < 0) return null; const t = -b - Math.sqrt(h); return t > 0.1 ? t : null; }
 function hWallHit(o, d, maxT) { for (let t = 0.3; t < (maxT || 30); t += 0.2) { const x = o.x + d.x * t, z = o.z + d.z * t, y = o.y + d.y * t; if (y < 0.02 || y > L.H - 0.02) return { t, x, y: clamp(y, 0.05, L.H - 0.05), z }; if (L.solid(Math.round(x / T), Math.round(z / T))) return { t, x, y, z }; } return null; }
-const hFall = (t) => (t <= 4 ? 1 : Math.max(0, 1 - (t - 4) / 14));
+const hFall = (t) => (t <= 3 ? 1 : Math.max(0, 1 - (t - 3) / 9));
 // shot resolution (host): o/d = shooter eye + aim, lit = shooter's flashlight on
 function hResolveShot(o, d, lit, remote) {
   const ms = hMons(), hits = new Map(), sacs = new Map(), nodes = new Map(), tmp = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
@@ -6018,12 +6018,24 @@ function hResolveShot(o, d, lit, remote) {
     else if (wh && wallFx < 3) { wallFx++; sparks(wh.x, wh.y, wh.z, 4, 0xffd080); puff(wh.x, wh.y, wh.z, 2, 0x777060, 0.4, 0.6); }
   }
   for (const [m, e] of hits) {
-    if (m.kind === 'glitch' && Math.random() < 0.3) { sparks(e.h.x, e.h.y, e.h.z, 14, 0x9fe8ff); AU.zap({ x: m.x, y: 1.5, z: m.z }); hNetMsg('Помеха сбоит — дробь прошла насквозь!'); continue; }
-    let mul = 1; if (m.kind === 'smiler') mul = lit && e.t < 18 ? 2 : 0.6; else if (m.kind === 'crawler') mul = (m.climb || 0) > 0.3 ? 0.3 : 1; else if (m.kind === 'flesh') mul = m.hArmor != null ? m.hArmor : 0.55;
-    hDamage(m, e.n * mul, e.h, 'shot');
+    if (!hVuln(m)) { // armour / not in this world / no skin to tear: the shot only makes it furious
+      sparks(e.h.x, e.h.y, e.h.z, 12, m.kind === 'glitch' ? 0x9fe8ff : 0xffe0a0); if (m.kind === 'glitch') AU.zap({ x: m.x, y: 1.5, z: m.z });
+      m.hFury = G.time + 9; if (m.kind !== 'glitch' && m.kind !== 'smiler') { m.state = 'chase'; m.memory = Math.max(m.memory || 0, 9); m.repath = 0; } if (m.kind === 'smiler') { m.hEnrage = 2.2; m.path = null; }
+      if ((HUNT.immT || 0) < G.time) { HUNT.immT = G.time + 4; hNetMsg(hImmuneMsg(m)); } continue; }
+    hDamage(m, e.n * (m.kind === 'flesh' ? 1.5 : 2), e.h, 'shot');
   }
   for (const [s, e] of sacs) hSacDamage(s, e.n * 1.0);
   for (const [nd, e] of nodes) hNodeDamage(nd, e.n);
+}
+// each monster can only be killed inside its own window
+function hVuln(m) {
+  if (L && L.boss) return false;
+  if (m.kind === 'flesh') return (m.hVulnT || 0) > G.time || (!!L.hnodes && L.hnodes.length > 0 && L.hnodes.every((n) => n.dead));
+  return (m.hVulnT || 0) > G.time;
+}
+function hImmuneMsg(m) {
+  if (L && L.boss) return 'У Сердца они бессмертны — дробь их только злит. Цель — само Сердце.';
+  return { smiler: 'Дробь отскакивает от Улыбаки. Заманите его в луч прожектора — там он каменеет и становится уязвим.', crawler: 'Панцирь Ползуна не пробить. Найдите громкую колонку: от её рёва он свернётся и раскроет брюхо.', glitch: 'Дробь проходит сквозь Помеху — её нет в нашем мире. Ток из щитка на миг делает её плотной.', flesh: 'Шкура Мясной тени глотает дробь. Вырвите все нервные узлы — шкура слезет.' }[m.kind] || 'Дробь не берёт его.';
 }
 function hNetMsg(t) { msg(t); if (hNet()) coopSend({ t: 'msg', s: t }); }
 // ---------------- monster damage / death (host) ----------------
@@ -6036,11 +6048,13 @@ function hDamage(m, dmg, h, src) {
   const x = h ? h.x : m.x, y = h ? h.y : 1.2, z = h ? h.z : m.z;
   hBloodFx(m.kind, x, y, z, Math.min(18, 4 + dmg * 2));
   if (hNet()) coopSend({ t: 'hhit', ls: L.seed, mi: hMons().indexOf(m), p: [hR2(x), hR2(y), hR2(z)], n: Math.round(dmg) });
-  if (m.hHp <= 0) { hKill(m); return; }
+  if (m.hHp <= 0) { hKill(m, false, src !== 'shot'); return; }
+  if (src === 'shot') { m.hFury = G.time + 9; if (m.kind !== 'glitch') { m.state = m.kind === 'smiler' ? m.state : 'chase'; m.memory = Math.max(m.memory || 0, 9); m.repath = 0; } }
   if (src !== 'shot' && (m.hReactT || 0) > G.time) return; m.hReactT = G.time + 1.2;
   const pct = Math.max(0, Math.round(m.hHp / m.hMax * 100));
-  if (m.kind === 'smiler') { m.hEnrage = 1.5; m.path = null; hNetMsg('Улыбака в ярости — оно двигается, даже когда на него смотрят! (' + pct + '%)'); AU.giggle({ x: m.x, y: 3, z: m.z }); }
+  if (m.kind === 'smiler') { m.hEnrage = 3.2; m.path = null; hNetMsg('Улыбака в ярости — оно двигается, даже когда на него смотрят! (' + pct + '%)'); AU.giggle({ x: m.x, y: 3, z: m.z }); }
   else if (m.kind === 'crawler') { m.stun = Math.max(m.stun || 0, 0.6); if (m.climb != null) { m.climbTarget = 0; } hNetMsg('Ползун ранен (' + pct + '%)'); }
+  else if (m.kind === 'glitch' && (m.hVulnT || 0) > G.time) { m.stun = Math.max(m.stun || 0, 0.5); sparks(m.x, 1.5, m.z, 14, 0x9fe8ff); hNetMsg('Помеха воет и дёргается (' + pct + '%) — добейте, пока она плотная!'); }
   else if (m.kind === 'glitch') { const t = m.randomTile([m.x, m.z], 10, 30); sparks(m.x, 1.5, m.z, 20, 0x9fe8ff); AU.zap({ x: m.x, y: 1.5, z: m.z }); m.x = t[0] * T; m.z = t[1] * T; m.path = null; m.state = 'patrol'; m.grace = Math.max(m.grace || 0, 2.5); hNetMsg('Помеха ранена и исчезла (' + pct + '%)… она вернётся.'); }
   else if (m.kind === 'flesh') { m.state = 'chase'; m.memory = 10; m.repath = 0; AU.growl({ x: m.x, y: 1.5, z: m.z }, 1.5); hNetMsg('Мясная тень ранена и взбешена (' + pct + '%)!'); }
 }
@@ -6048,15 +6062,23 @@ function hBloodFx(kind, x, y, z, n) {
   const col = kind === 'glitch' ? 0x9fe8ff : kind === 'smiler' ? 0x1a1414 : 0x6a0008;
   puff(x, y, z, Math.ceil(n * 0.6), col, 1.4, 0.8); sparks(x, y, z, Math.ceil(n * 0.5), kind === 'glitch' ? 0xd0f8ff : 0x8a0010); HSND.hit({ x, y, z });
 }
-function hKill(m, fromNet) {
-  if (m.hDeadT != null) return;
+function hKill(m, fromNet, perm) {
+  if (m.hDeadT != null) return; m.hPerm = true; m.hRespawnAt = 0;
+  if (L) L.hKillsN = (L.hKillsN || 0) + 1;
+  { const me = hMe(); me.san = Math.max(0, (me.san == null ? 100 : me.san) - 10); if (typeof lightsOutWave === 'function' && G.state === 'play') lightsOutWave(); }
   m.alive = false; m.state = 'dead'; m.hDeadT = 0; m.hKilled = true; m.stun = 0; m.path = null; m.group.visible = true; if (m.blobs) m.blobs.length = 0;
   HSND.wail({ x: m.x, y: 1.5, z: m.z }, m.kind); G.shake = Math.max(G.shake, 0.35 * Math.max(0, 1 - m.dist / 25));
   hBloodFx(m.kind, m.x, (m.height || 2) * 0.5, m.z, 30); G.flashStatic = Math.max(G.flashStatic, m.kind === 'glitch' ? 0.8 : 0.3);
-  const nm = HUNT.names[m.kind] || 'Монстр'; pop(nm.toUpperCase() + ' УБИТ', '#ff6a40'); msg(nm + ' уничтожен' + (m.kind === 'glitch' || m.kind === 'flesh' ? 'а' : '') + '!' + (hMons().some((q) => q.alive) ? '' : ' Здесь больше никого… кажется.'));
+  const nm = HUNT.names[m.kind] || 'Монстр'; pop(nm.toUpperCase() + ' УБИТ', '#ff6a40'); msg(nm + ' уничтожен' + (m.kind === 'glitch' || m.kind === 'flesh' ? 'а' : '') + '!' + ' Навсегда.');
   SAVE.hkills = SAVE.hkills || {}; SAVE.hkills[m.kind] = (SAVE.hkills[m.kind] || 0) + 1; saveGame();
   if (window.buzz) buzz([80, 40, 160]);
-  if (!fromNet && hNet() && hHost()) coopSend({ t: 'hkill', ls: L.seed, mi: hMons().indexOf(m) });
+  if (!fromNet && hNet() && hHost()) coopSend({ t: 'hkill', ls: L.seed, mi: hMons().indexOf(m), pm: perm ? 1 : 0 });
+}
+function hRevive(m, fromNet) {
+  if (m.hDeadT == null) return; m.hDeadT = null; m.hKilled = false; m.alive = true; m.state = 'patrol'; m.path = null; m.stun = 0;
+  m.group.position.y = 0; m.group.rotation.set(0, m.yaw, 0); m.group.scale.setScalar(1); m.group.visible = true;
+  if (hHost()) { hInitHp(m); m.hMax = Math.round(m.hMax * 1.3); m.hHp = m.hMax; m.hFury = G.time + 25; const t = m.randomTile([P.x, P.z], 12, 40); m.x = t[0] * T; m.z = t[1] * T; m.grace = 1; m.hRespawnAt = 0; if (hNet()) coopSend({ t: 'hrev', ls: L.seed, mi: hMons().indexOf(m) }); }
+  AU.stinger(); AU.growl(null, 1.2); G.flashStatic = Math.max(G.flashStatic, 0.6); const nm = HUNT.names[m.kind] || 'Оно'; pop(nm.toUpperCase() + ' ВЕРНУЛ' + (m.kind === 'glitch' || m.kind === 'flesh' ? 'АСЬ' : 'СЯ'), '#ff3030'); msg('Где-то далеко что-то поднялось с пола. ' + nm + ' снова здесь — сильнее и злее.');
 }
 function hDeathAnim(m, dt) {
   m.hDeadT += dt; const t = m.hDeadT, k = Math.min(1, t / 0.9), e = 1 - (1 - k) * (1 - k);
@@ -6077,6 +6099,7 @@ function hFlinchTick(m, dt) { if (!(m.hFlinch > 0) || !m.alive) return; m.hFlinc
     const pu = C.prototype.update;
     C.prototype.update = function (dt) {
       if (this.hDeadT != null) { hDeathAnim(this, dt); return; }
+      if (this.hFury > G.time && this.alive) dt *= 1.35;
       if (this.kind === 'smiler' && this.hEnrage > 0 && this.alive && !(G.state === 'jumpscare' && G.js && G.js.mon === this)) {
         this.hEnrage -= dt; this.commonPre(dt);
         this.hRp = (this.hRp || 0) - dt; if (!this.path || this.hRp <= 0) { const [tx, ty] = this.playerTile(); this.goTo(tx, ty); this.hRp = 0.35; }
@@ -6097,19 +6120,19 @@ function hShoot() {
   if (!hHasGun() || G.time < HUNT.shootT || HUNT.reloadT > G.time) return false;
   const me = hMe();
   if (!(me.hAmmo > 0)) { if (me.hRes > 0) hReload(); else { HSND.click(); HUNT.shootT = G.time + 0.4; msg('Патроны кончились. Ищите коробки с патронами.'); } return false; }
-  me.hAmmo--; HUNT.shootT = G.time + 0.55; HUNT.recoil = 1; HUNT.flashT = 0.07; G.fovKick = Math.max(G.fovKick || 0, 4); G.shake = Math.max(G.shake, 0.18); HSND.boom(null); if (window.buzz) buzz(70, true);
+  me.hAmmo--; HUNT.shootT = G.time + 0.55; L.hShotsN = (L.hShotsN || 0) + 1; me.san = Math.max(0, (me.san == null ? 100 : me.san) - 6); G.dirT = Math.min(G.dirT || 30, 8); HUNT.recoil = 1; HUNT.flashT = 0.07; G.fovKick = Math.max(G.fovKick || 0, 4); G.shake = Math.max(G.shake, 0.18); HSND.boom(null); if (window.buzz) buzz(70, true);
   const o = new THREE.Vector3(), d = new THREE.Vector3(); camera.getWorldPosition(o); camera.getWorldDirection(d);
   sparks(o.x + d.x * 0.8, o.y + d.y * 0.8 - 0.1, o.z + d.z * 0.8, 6, 0xffc070); puff(o.x + d.x * 0.9, o.y - 0.1, o.z + d.z * 0.9, 3, 0x888070, 0.5, 0.7);
-  emitNoise(me.x, me.z, 34, 'player');
-  if (hHost()) hResolveShot(o, d, !!me.flashOn, false);
+  emitNoise(me.x, me.z, 46, 'player');
+  if (hHost()) { hResolveShot(o, d, !!me.flashOn, false); if (hNet()) coopSend({ t: 'hshot', ls: L.seed, fx: 1 }); }
   else { const wh = hWallHit(o, d, 34); if (wh) sparks(wh.x, wh.y, wh.z, 4, 0xffd080); coopSend({ t: 'hshot', ls: L.seed, o: [o.x, o.y, o.z].map(hR2), d: [d.x, d.y, d.z].map((v) => Math.round(v * 1000) / 1000), lit: me.flashOn ? 1 : 0 }); }
   if (me.hAmmo === 0 && me.hRes > 0) setTimeout(() => { if (hMe().hAmmo === 0) hReload(); }, 450);
   return true;
 }
 function hReload() {
   const me = hMe(); if (!hHasGun() || HUNT.reloadT > G.time || me.hAmmo >= HUNT.MAG || !(me.hRes > 0)) return false;
-  HUNT.reloadT = G.time + 1.6; HSND.reload(); const lv = L;
-  setTimeout(() => { if (L !== lv) return; const m2 = hMe(), n = Math.min(HUNT.MAG - m2.hAmmo, m2.hRes); m2.hAmmo += n; m2.hRes -= n; }, 1550);
+  HUNT.reloadT = G.time + 2.4; HSND.reload(); const lv = L;
+  setTimeout(() => { if (L !== lv) return; const m2 = hMe(), n = Math.min(HUNT.MAG - m2.hAmmo, m2.hRes); m2.hAmmo += n; m2.hRes -= n; }, 2350);
   return true;
 }
 // ---------------- pickups / devices (deterministic per seed, so host and guest build the same list) ----------------
@@ -6144,7 +6167,7 @@ function hMakePick(Lv, kind, tx, ty, rng) {
   }
   const halo = new THREE.Sprite(D(new THREE.SpriteMaterial({ map: GLOW_TEX, color: kind === 'gun' ? 0xffd070 : 0xff6040, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.45 }))); halo.scale.setScalar(kind === 'gun' ? 2.2 : 0.9); halo.position.y = 0.3; g.add(halo);
   const jx = (rng() - 0.5) * 0.8, jz = (rng() - 0.5) * 0.8; g.position.set(tx * T + jx, 0, ty * T + jz); g.rotation.y = rng() * 6; Lv.group.add(g);
-  const it = { kind: 'hpick', sub: kind, x: g.position.x, z: g.position.z, tx, ty, r: 1.8, active: true, mesh: g, n: kind === 'gun' ? 4 : ({ 0.8: 4, 1.25: 2 }[hDiffK()] || 3) };
+  const it = { kind: 'hpick', sub: kind, x: g.position.x, z: g.position.z, tx, ty, r: 1.8, active: true, mesh: g, n: kind === 'gun' ? 2 : ({ 0.8: 3, 1.25: 1 }[hDiffK()] || 2) };
   Lv.inter.push(it); return it;
 }
 function hPickUse(it) {
@@ -6157,12 +6180,12 @@ function hPickHide(it) { it.active = false; it.mesh.visible = false; }
 function hPickApply(it) {
   hPickHide(it); AU.pickup(); const me = hMe();
   if (it.sub === 'gun') {
-    if (!me.hGun) { me.hGun = true; me.hAmmo = HUNT.MAG; me.hRes = Math.min(HUNT.MAXRES, (me.hRes || 0) + it.n); if (!HUNT.gun) hBuildGun(); pop('ОБРЕЗ', '#ffd070'); msg('Обрез! ' + (TOUCH.on ? 'Кнопка «ОГОНЬ»' : 'ЛКМ — выстрел, T — перезарядка') + '. Дробь бьёт сильно только вблизи. Выстрел слышат все.'); setTimeout(() => msg(huntTip()), 2600); }
+    if (!me.hGun) { me.hGun = true; me.hAmmo = HUNT.MAG; me.hRes = Math.min(HUNT.MAXRES, me.hRes || 0); if (!HUNT.gun) hBuildGun(); pop('ОБРЕЗ', '#ffd070'); msg('Обрез. Два патрона — и всё. ' + (TOUCH.on ? 'Кнопка «ОГОНЬ»' : 'ЛКМ — выстрел, T — перезарядка') + '. Каждый выстрел слышат все, он бьёт по рассудку, а убитое Закулисье поднимает снова — злее. Иногда лучше просто пройти мимо.'); setTimeout(() => msg(huntTip()), 2600); }
     else { me.hRes = Math.min(HUNT.MAXRES, (me.hRes || 0) + it.n); pop('+' + it.n + ' ПАТРОНА', '#ffd070'); msg('В ящике охраны нашлись патроны.'); }
   } else { me.hRes = Math.min(HUNT.MAXRES, (me.hRes || 0) + it.n); pop('+' + it.n + ' ПАТРОНА', '#ffb070'); if (!me.hGun) msg('Патроны для обреза. Сам обрез — в зелёном ящике охраны.'); }
   if (window.buzz) buzz(40, true);
 }
-function huntTip() { const k = L && (L.boss ? 'boss' : L.monster && L.monster.kind); return { smiler: 'Улыбака: стреляйте, пока светите на него фонариком — свет его обжигает. После попадания оно бросается на вас.', crawler: 'Ползун: на потолке дробь его почти не берёт. Стреляйте, когда он на полу. Пар из вентилей тоже его ранит.', glitch: 'Помеха: иногда дробь проходит сквозь неё. После попадания она исчезает и возвращается. Электрощиток бьёт её током.', flesh: 'Мясная тень: толстая шкура. Вырвите нервные узлы на стенах — шкура ослабнет. Обвал потолка убивает сразу.', boss: 'Сердце: вырвите ядра, чтобы снять щит, потом стреляйте в светящиеся наросты.' }[k] || ''; }
+function huntTip() { const k = L && (L.boss ? 'boss' : L.monster && L.monster.kind); return { smiler: 'Улыбаку дробь не берёт. На уровне есть прожекторы: включите и заманите его в луч — там он каменеет, и тогда хватит пары выстрелов. А можно просто пройти мимо.', crawler: 'Панцирь Ползуна не пробить. Найдите громкую колонку на стене: от её рёва он падает, сворачивается и раскрывает брюхо на 7 секунд. Пар из вентилей тоже убивает его.', glitch: 'Помехи нет в нашем мире — дробь проходит насквозь. Ток из электрощитка делает её плотной на 8 секунд.', flesh: 'Мясная тень неуязвима, пока целы нервные узлы на стенах. Вырвите все — шкура слезет. Обвал потолка убивает сразу.', boss: 'У Сердца монстры бессмертны. Вырвите ядра, чтобы снять щит, потом стреляйте в светящиеся наросты.' }[k] || ''; }
 // ---------------- per-level build ----------------
 function hBuild(Lv) {
   if (!Lv || Lv.hBuilt) return; Lv.hBuilt = true;
@@ -6173,12 +6196,15 @@ function hBuild(Lv) {
     let gt = null;
     if (lv !== 0) gt = hFreeTile(Lv, rng, Math.round(Lv.maxD * 0.35), Math.round(Lv.maxD * 0.8));
     if (gt) hMakePick(Lv, 'gun', gt[0], gt[1], rng);
-    const ns = (Lv.boss ? 6 : 3) + ({ 0.8: 1, 1.25: -1 }[hDiffK()] || 0);
+    const ns = (Lv.boss ? 4 : 1) + ({ 0.8: 1 }[hDiffK()] || 0);
     for (let i = 0; i < ns; i++) { const t = hFreeTile(Lv, rng, 5); if (t) hMakePick(Lv, 'shells', t[0], t[1], rng); }
   }
   const slots = hWallSlots(Lv, rng, 4);
   const far = (s, list, r) => list.every((o) => Math.hypot(o.tx - s[0], o.ty - s[1]) >= r);
   if (lv === 0 && !Lv.boss) hBuildGuardPost(Lv, slots, rng, cute);
+  Lv.hspk = []; Lv.hflood = [];
+  if (lv === 0 && !Lv.boss) for (const s of slots) { if (Lv.hflood.length >= 2) break; const d = Lv.dist[Lv.I(s[0], s[1])]; if (!Lv.special[Lv.I(s[0], s[1])] && d > 6 && far(s, Lv.hflood, 10) && hBeamLen(Lv, s) >= 4) hBuildFlood(Lv, s); }
+  if (lv === 1) for (const s of slots) { if (Lv.hspk.length >= 2) break; const d = Lv.dist[Lv.I(s[0], s[1])]; if (!Lv.special[Lv.I(s[0], s[1])] && d > 6 && far(s, Lv.hspk, 10)) hBuildSpeaker(Lv, s); }
   if (lv === 1) {
     const vs = Lv.vents.slice(); for (const v of vs) { if (Lv.hvalves.length >= 3) break; const vx = Math.round(v.x / T), vz = Math.round(v.z / T);
       const s = slots.find((q) => Math.abs(q[0] - vx) + Math.abs(q[1] - vz) <= 2 && !Lv.special[Lv.I(q[0], q[1])] && far(q, Lv.hvalves, 5)); if (!s) continue; hBuildValve(Lv, s); }
@@ -6216,6 +6242,52 @@ function hCamTick(dt) {
   g.fillStyle = '#7dff8a'; g.font = 'bold 12px monospace'; g.fillText('CAM ' + (1 + (G.time / 4 | 0) % 9) + '  ● REC', 6, 14); if (!hMons().some((m) => m.alive)) g.fillText('НЕТ ДВИЖЕНИЯ', 80, 186);
   c.tex.needsUpdate = true;
 }
+// L0: floodlight — what it lights cannot move (the Smiler only moves unseen) and its skin cracks
+function hBeamLen(Lv, s) { const [x, y, dx, dy] = s; let n = 0; for (let k = 0; k < 6; k++) { if (Lv.solid(x - dx * k, y - dy * k)) break; n++; } return n; }
+function hBuildFlood(Lv, s) {
+  const D = (o) => { Lv.disp.push(o); return o; }, g = new THREE.Group(), metal = D(new THREE.MeshLambertMaterial({ color: 0x3a3a36, emissive: 0x0a0a08 }));
+  const arm = new THREE.Mesh(D(new THREE.BoxGeometry(0.08, 0.08, 0.5)), metal); arm.position.set(0, 2.5, 0.25); g.add(arm);
+  const head = new THREE.Mesh(D(new THREE.CylinderGeometry(0.28, 0.2, 0.36, 12)), metal); head.rotation.x = Math.PI / 2 + 0.35; head.position.set(0, 2.45, 0.55); g.add(head);
+  const lens = new THREE.Mesh(D(new THREE.CircleGeometry(0.25, 16)), D(new THREE.MeshBasicMaterial({ color: 0x303028 }))); lens.position.set(0, 2.39, 0.73); lens.rotation.x = -0.35; g.add(lens);
+  const beam = new THREE.Mesh(D(new THREE.ConeGeometry(2.6, 9, 20, 1, true)), D(new THREE.MeshBasicMaterial({ color: 0xfff4d0, transparent: true, opacity: 0.13, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false })));
+  beam.position.set(0, 1.0, 4.9); beam.rotation.x = Math.PI / 2 - 0.3; beam.visible = false; g.add(beam);
+  const sw = new THREE.Mesh(D(new THREE.BoxGeometry(0.22, 0.3, 0.1)), D(new THREE.MeshLambertMaterial({ color: 0x8a1a10, emissive: 0x200404 }))); sw.position.set(0.5, 1.3, 0.05); g.add(sw);
+  hMountWall(Lv, g, s, 0.02, 0);
+  const [x, y, dx, dy] = s; const it = { kind: 'hflood', tx: x, ty: y, x: x * T, z: y * T, r: 2.0, active: true, lens, beam, on: 0, cd: 0, ox: x * T + dx * (T / 2), oz: y * T + dy * (T / 2), fx: -dx, fz: -dy };
+  Lv.hflood.push(it); Lv.inter.push(it);
+}
+function hFloodFire(it) { it.on = G.time + 16; it.cd = G.time + 40; it.beam.visible = true; it.lens.material.color.set(0xfffbe8); AU.tone({ freq: 60, dur: 0.3, gain: 0.3, wave: 'square', lp: 400, pos: { x: it.x, y: 2, z: it.z } }); AU.nz({ type: 'bandpass', freq: 120, Q: 2, dur: 16, gain: 0.05, pos: { x: it.x, y: 2.4, z: it.z } }); if (Math.hypot(it.x - P.x, it.z - P.z) < 20) msg('Прожектор вспыхнул на 16 секунд. Всё, что попадёт в луч, не сможет двигаться.'); }
+function hFloodTick(dt) {
+  if (!L.hflood) return;
+  for (const it of L.hflood) {
+    if (it.on && it.on < G.time) { it.on = 0; it.beam.visible = false; it.lens.material.color.set(0x303028); }
+    if (!it.on) continue; it.beam.material.opacity = 0.11 + Math.random() * 0.03;
+    if (!hHost()) continue;
+    for (const m of hMons()) { if (!m.alive || m.kind !== 'smiler') continue; const vx = m.x - it.ox, vz = m.z - it.oz, d = Math.hypot(vx, vz); if (d < 1 || d > 14) continue; if ((vx * it.fx + vz * it.fz) / d < 0.82 || !losClear(it.ox + it.fx * 0.8, it.oz + it.fz * 0.8, m.x, m.z)) continue;
+      m.stun = Math.max(m.stun || 0, 0.4); m.hEnrage = 0; m.path = null; if (!((m.hVulnT || 0) > G.time + 0.5)) { if (!m.hBeamMsg || m.hBeamMsg < G.time) { m.hBeamMsg = G.time + 10; hNetMsg('Улыбака попал в луч и окаменел — кожа трескается! Сейчас его можно убить.'); AU.giggle({ x: m.x, y: 3, z: m.z }); } } m.hVulnT = G.time + 1.2; }
+  }
+}
+// L1: loudspeaker — its scream makes the blind Crawler drop, curl up and open its soft belly
+function hBuildSpeaker(Lv, s) {
+  const D = (o) => { Lv.disp.push(o); return o; }, g = new THREE.Group();
+  const box = new THREE.Mesh(D(new THREE.BoxGeometry(0.7, 0.9, 0.5)), D(new THREE.MeshLambertMaterial({ color: 0x1c1c1c, emissive: 0x050505 }))); box.position.set(0, 1.6, 0.25); g.add(box);
+  const cone = new THREE.Mesh(D(new THREE.CylinderGeometry(0.26, 0.12, 0.12, 16, 1, true)), D(new THREE.MeshLambertMaterial({ color: 0x3a3a3a, side: THREE.DoubleSide }))); cone.rotation.x = Math.PI / 2; cone.position.set(0, 1.7, 0.53); g.add(cone);
+  const tw = new THREE.Mesh(D(new THREE.CircleGeometry(0.07, 10)), D(new THREE.MeshLambertMaterial({ color: 0x555555 }))); tw.position.set(0, 1.33, 0.505); g.add(tw);
+  const lamp = new THREE.Mesh(D(new THREE.SphereGeometry(0.04, 8, 6)), D(new THREE.MeshBasicMaterial({ color: 0x30ff40 }))); lamp.position.set(0.26, 1.98, 0.5); g.add(lamp);
+  hMountWall(Lv, g, s, 0.02, 0);
+  const [x, y] = s; const it = { kind: 'hspk', tx: x, ty: y, x: x * T, z: y * T, r: 2.0, active: true, cone, lamp, on: 0, cd: 0, uses: 2 };
+  Lv.hspk.push(it); Lv.inter.push(it);
+}
+function hSpeakerFire(it) {
+  it.on = G.time + 4.5; it.cd = G.time + 35; it.uses--; it.lamp.material.color.set(0xff3020); const pos = { x: it.x, y: 1.6, z: it.z };
+  for (let i = 0; i < 9; i++) { AU.tone({ freq: 900 + (i % 2) * 500, dur: 0.48, gain: 0.5, wave: 'square', lp: 4000, delay: i * 0.5, pos }); AU.nz({ type: 'bandpass', freq: 2500, Q: 1, dur: 0.45, gain: 0.35, delay: i * 0.5, pos }); }
+  if (Math.hypot(it.x - P.x, it.z - P.z) < 30) { msg('Колонка ревёт на весь уровень! Ползун этого не вынесет.'); G.shake = Math.max(G.shake, 0.15); }
+  if (hHost()) emitNoise(it.x, it.z, 60, 'player');
+  { for (const m of hMons()) { if (!m.alive || m.kind !== 'crawler') continue; const d = Math.hypot(m.x - it.x, m.z - it.z); if (d > 26) continue;
+      m.hCurl = G.time + 7.5; if (!hHost()) continue; m.climb = 0; m.climbTarget = 0; m.stun = Math.max(m.stun || 0, 7); m.path = null; m.hVulnT = G.time + 7.5; m.hCurl = G.time + 7.5; setTimeout(() => { if (m.alive) { AU.screech({ x: m.x, y: 0.5, z: m.z }); } }, 300);
+      hNetMsg('Ползун рухнул и свернулся от рёва — брюхо раскрыто! 7 секунд, стреляйте!'); } }
+}
+function hCurlTick(dt) { for (const m of hMons()) { if (m.hCurl && m.hCurl <= G.time) { m.hCurl = 0; m.group.rotation.z = 0; } if (!m.alive || !(m.hCurl > G.time)) continue; m.group.rotation.z = Math.sin(G.time * 30) * 0.12 + 0.9; m.group.position.y = 0.05; } }
 // L1: steam valves
 function hBuildValve(Lv, s) {
   const D = (o) => { Lv.disp.push(o); return o; }, g = new THREE.Group(), red = D(new THREE.MeshLambertMaterial({ color: 0xb01810, emissive: 0x300404 })), pipe = D(new THREE.MeshLambertMaterial({ color: 0x4a4038, emissive: 0x0a0806 }));
@@ -6257,7 +6329,7 @@ function hZapTick(dt) {
     HSND.zap(null); G.flashStatic = Math.max(G.flashStatic, 0.7); G.shake = Math.max(G.shake, 0.25);
     for (const f of L.fixtures) { f.cutPre = Math.random() * 0.2; f.cut = 0.4 + Math.random() * 0.5; }
     const me = hMe(); if (G.state === 'play' && !me.hidden && !(HCO && COOP.on && me.down) && !hOnMat()) { P.cause = 'hurt'; hurtPlayer(26, false, null); msg('Вас ударило током!'); }
-    if (hHost()) for (const m of hMons()) { if (!m.alive || (m.kind === 'crawler' && (m.climb || 0) > 0.5)) continue; const k = m.kind === 'glitch' ? 1.5 : 1; m.stun = Math.max(m.stun || 0, m.kind === 'glitch' ? 3 : 1.5); hDamage(m, 8 * k, null, 'zap'); }
+    if (hHost()) for (const m of hMons()) { if (!m.alive || (m.kind === 'crawler' && (m.climb || 0) > 0.5)) continue; const k = m.kind === 'glitch' ? 1.5 : 1; m.stun = Math.max(m.stun || 0, m.kind === 'glitch' ? 3 : 1.5); if (m.kind === 'glitch') { m.hVulnT = G.time + 8; hNetMsg('Помеха уплотнилась от тока! 8 секунд её можно убить.'); } hDamage(m, 4 * k, null, 'zap'); }
   }
   if (z.t < 2.9) { if (Math.random() < dt * 30) sparks(P.x + rnd(-4, 4), 0.2, P.z + rnd(-4, 4), 3, 0x9fe8ff); if (L.caustics) for (const c of L.caustics) c.offset.x += dt * 3; } else L.hzap = null;
 }
@@ -6398,6 +6470,8 @@ function hUse(it) {
   if (it.kind === 'hpick') { hPickUse(it); return true; }
   if (it.kind === 'hcam') { msg('Камеры охраны: ' + (hMons().filter((m) => m.alive).map((m) => (HUNT.names[m.kind] || 'монстр') + ' — ' + relDir(m.x, m.z) + ', ' + Math.round(m.dist) + ' м').join('; ') || 'движения нет')); return true; }
   if (it.kind === 'hvalve') { if (it.cd > G.time) { msg('Давление ещё не набралось (' + Math.ceil(it.cd - G.time) + ' с).'); AU.locked(); return true; } if (hNet()) coopSend({ t: 'hdev', ls: L.seed, i }); hValveFire(it); return true; }
+  if (it.kind === 'hflood') { if (it.on) return true; if (it.cd > G.time) { msg('Прожектор остывает (' + Math.ceil(it.cd - G.time) + ' с).'); AU.locked(); return true; } if (hNet()) coopSend({ t: 'hdev', ls: L.seed, i }); hFloodFire(it); return true; }
+  if (it.kind === 'hspk') { if (it.uses <= 0) { msg('Колонка сгорела.'); AU.locked(); return true; } if (it.cd > G.time || it.on > G.time) { msg('Колонка перегрелась (' + Math.ceil(Math.max(0, it.cd - G.time)) + ' с).'); AU.locked(); return true; } if (hNet()) coopSend({ t: 'hdev', ls: L.seed, i }); hSpeakerFire(it); return true; }
   if (it.kind === 'hpanel') { if (it.uses <= 0) { msg('Щиток сгорел.'); AU.locked(); return true; } if (it.cd > G.time || L.hzap) { msg('Щиток перегрет (' + Math.ceil(Math.max(0, it.cd - G.time)) + ' с).'); AU.locked(); return true; } if (hNet()) coopSend({ t: 'hdev', ls: L.seed, i }); hPanelFire(it); return true; }
   if (it.kind === 'hnode') { if (hHost()) hNodeKill(it, false); else { coopSend({ t: 'hnoder', ls: L.seed, i }); it.active = false; } return true; }
   if (it.kind === 'hsac') {
@@ -6411,6 +6485,8 @@ function hUse(it) {
   return false;
 }
 function hPrompt(it) {
+  if (it.kind === 'hflood') return it.on ? 'Прожектор горит…' : it.cd > G.time ? 'Прожектор остывает… ' + Math.ceil(it.cd - G.time) + ' с' : '[E] Включить прожектор (16 с): что в луче — не двигается';
+  if (it.kind === 'hspk') return it.uses <= 0 ? 'Колонка сгорела' : it.cd > G.time ? 'Колонка перегрета… ' + Math.ceil(it.cd - G.time) + ' с' : '[E] Врубить колонку на полную (очень громко!). Осталось: ' + it.uses;
   if (it.kind === 'hpick') { const me = hMe(); return it.sub === 'gun' ? (me.hGun ? '[E] Ящик охраны: забрать патроны' : '[E] Ящик охраны: взять ОБРЕЗ') : '[E] Подобрать патроны (×' + it.n + ')'; }
   if (it.kind === 'hcam') return '[E] Камеры охраны: где монстры?';
   if (it.kind === 'hvalve') return it.cd > G.time ? 'Вентиль: давление набирается… ' + Math.ceil(it.cd - G.time) + ' с' : '[E] Открыть паровой вентиль (пар обжигает и вас, и Ползуна)';
@@ -6433,13 +6509,13 @@ function hPrompt(it) {
   const _uw = updateWorld;
   updateWorld = function (dt) {
     _uw(dt); if (!L) return;
-    hCamTick(dt); hZapTick(dt); hHeartTick(dt);
+    hCamTick(dt); hZapTick(dt); hHeartTick(dt); hFloodTick(dt); hCurlTick(dt); if (L.hspk) for (const it of L.hspk) { if (it.on > G.time) it.cone.scale.setScalar(1 + Math.random() * 0.15); else if (it.cd && it.cd < G.time && it.uses > 0) it.lamp.material.color.set(0x30ff40); }
     if (L.hvalves) for (const it of L.hvalves) { if (it.spin > 0) { it.spin -= dt; it.wheel.rotation.z += dt * 9; } if (it.cd && it.cd < G.time && !it.ready) { it.ready = true; it.lamp.material.color.set(0x30ff40); } if (it.cd > G.time) it.ready = false; }
     if (L.hpanels) for (const p of L.hpanels) if (p.cd && p.cd < G.time && p.uses > 0 && !p.ok) { p.ok = true; p.lever.rotation.x = 0.6; p.lamp.material.color.set(0x30ff40); } else if (p.cd > G.time) p.ok = false;
     if (L.hnodes) for (const n of L.hnodes) if (!n.dead) { const s = 1 + 0.12 * Math.sin(G.time * 5 + n.p.x); n.sac.scale.set(s, s * 1.25, s * 0.7); n.glow.material.opacity = 0.4 + 0.3 * Math.sin(G.time * 5 + n.p.x); }
     if (L.vents && G.state === 'play') for (const v of L.vents) if (v.hForce > G.time) {
       v.on = 1; if (Math.random() < dt * 25) emit(PS_PUFF, v.x + rnd(-0.5, 0.5), 0.1, v.z + rnd(-0.5, 0.5), rnd(-0.4, 0.4), rnd(3, 6), rnd(-0.4, 0.4), rnd(0.9, 1.6), 0x777070, -0.5, 1.1);
-      if (hHost()) for (const m of hMons()) if (m.alive && Math.hypot(m.x - v.x, m.z - v.z) < 1.7) hDamage(m, (m.kind === 'crawler' ? 7 : 3) * dt, null, 'steam');
+      if (hHost()) for (const m of hMons()) if (m.alive && Math.hypot(m.x - v.x, m.z - v.z) < 1.7) hDamage(m, (m.kind === 'crawler' ? 9 : 3) * dt, null, 'steam');
     }
   };
   const _gr = gfxRender;
@@ -6460,10 +6536,19 @@ function hPrompt(it) {
   const _lc = loadCheckpoint; loadCheckpoint = function () { const h = SAVE.cp && SAVE.cp.h; const r = _lc(); if (r && h) { P.hGun = h.g; P.hAmmo = h.a; P.hRes = h.r; for (const i of h.pk || []) { const it = L.inter[i]; if (!it) continue; if (it.kind === 'hpick') hPickHide(it); else if (it.kind === 'hnode') hNodeKill(it, true); } if (P.hGun && !HUNT.gun) hBuildGun(); } return r; };
   const _da = doAction;
   doAction = function (a) { if (a === 'hfire') { hShoot(); return; } if (a === 'hreload') { hReload(); return; } return _da(a); };
+  // «Тихий путь»: a level finished without a single shot (by either player) and without kills is rewarded
+  const _lcp = levelComplete;
+  levelComplete = function () {
+    if (L && huntOn() && !L.hShotsN && !L.hKillsN && !L.hQuietDone) {
+      L.hQuietDone = true; const me = hMe(); me.san = 100; P.battery = 100; P.bottles = (P.bottles || 0) + 1; P.health = Math.min(100, P.health + 30);
+      SAVE.hquiet = (SAVE.hquiet || 0) + 1; saveGame(); setTimeout(() => { pop('ТИХИЙ ПУТЬ', '#9fe8c0'); msg('Тихий путь: ни одного выстрела. Закулисье вас не заметило — рассудок и фонарик восстановлены, +бутылка, +здоровье.'); }, 300);
+    }
+    return _lcp.apply(this, arguments);
+  };
   const _rh = recordsHTML;
-  recordsHTML = function () { const k = SAVE.hkills || {}; const n = (x) => k[x] || 0; return _rh() + '<h2 style="margin-top:18px">ОХОТА</h2><table><tr><td>Улыбака</td><td>' + n('smiler') + '</td><td>Ползун</td><td>' + n('crawler') + '</td></tr><tr><td>Помеха</td><td>' + n('glitch') + '</td><td>Мясная тень</td><td>' + n('flesh') + '</td></tr><tr><td>Сердце Закулисья</td><td>' + n('heart') + '</td><td></td><td></td></tr></table>'; };
+  recordsHTML = function () { const k = SAVE.hkills || {}; const n = (x) => k[x] || 0; return _rh() + '<h2 style="margin-top:18px">ОХОТА</h2><table><tr><td>Улыбака</td><td>' + n('smiler') + '</td><td>Ползун</td><td>' + n('crawler') + '</td></tr><tr><td>Помеха</td><td>' + n('glitch') + '</td><td>Мясная тень</td><td>' + n('flesh') + '</td></tr><tr><td>Сердце Закулисья</td><td>' + n('heart') + '</td><td>Тихий путь</td><td>' + (SAVE.hquiet || 0) + '</td></tr></table>'; };
   const _ch = controlsHTML;
-  controlsHTML = function () { return _ch() + '<p style="margin-top:8px;color:#fc9"><b>Обрез</b> (зелёный ящик охраны): ' + (TOUCH.on ? 'кнопка «ОГОНЬ», ⟳ — перезарядка' : 'ЛКМ — выстрел, T — перезарядка') + '. Два патрона в стволах, дробь сильна только вблизи, выстрел слышат все монстры. У каждого монстра своя слабость — подсказка появится, когда возьмёте обрез.</p>'; };
+  controlsHTML = function () { return _ch() + '<p style="margin-top:8px;color:#fc9"><b>Обрез</b> (зелёный ящик охраны): ' + (TOUCH.on ? 'кнопка «ОГОНЬ», ⟳ — перезарядка' : 'ЛКМ — выстрел, T — перезарядка') + '. Патронов почти нет, а обычная дробь монстров не берёт — только злит. Каждого можно убить лишь при своём условии: Улыбаку — в луче прожектора, Ползуна — когда рёв колонки заставит его раскрыться, Помеху — сразу после удара током из щитка, Мясную тень — когда вырваны все нервные узлы. Убитый не возвращается. Каждый выстрел слышат все и он бьёт по рассудку; уровень без единого выстрела даёт награду «Тихий путь».</p>'; };
   { const e = ENDINGS.find((x) => x.id === 'escape'); if (e) e.text = 'Ты разорвал Сердце Закулисья, и всё, что охотилось на тебя, взвыло одним голосом.\nКоридоры складывались за спиной, но последняя дверь поддалась. За ней — парковка торгового центра, утро и запах дождя.\nНо иногда, когда гудит лампа, ты всё ещё слышишь смех за спиной.'; }
   { const t = ENDINGS.find((x) => x.id === 'true'); if (t) t.hint = 'Найди все 8 записок, разорви Сердце Закулисья и найди белую дверь в его скрытой комнате.'; }
   { const e = ENDINGS.find((x) => x.id === 'escape'); if (e) e.hint = 'Пройди все уровни и уничтожь Сердце Закулисья.'; }
@@ -6492,12 +6577,13 @@ if (HCO) {
     const host = COOP.role === 'host', ok = COOP.on && !!L && (d.ls == null || d.ls === L.seed), M = hMons(); if (!ok) return;
     const it = d.i != null ? L.inter[d.i] : null;
     switch (d.t) {
-      case 'hshot': { const x = COOP.R.x - Math.sin(COOP.R.yaw) * 0.5, z = COOP.R.z - Math.cos(COOP.R.yaw) * 0.5; sparks(x, 1.35, z, 6, 0xffc070); HSND.boom({ x, y: 1.4, z }); if (host && Array.isArray(d.o) && Array.isArray(d.d)) { const o = new THREE.Vector3().fromArray(d.o), v = new THREE.Vector3().fromArray(d.d).normalize(); hResolveShot(o, v, !!d.lit, true); } return; }
+      case 'hshot': { L.hShotsN = (L.hShotsN || 0) + 1; const x = COOP.R.x - Math.sin(COOP.R.yaw) * 0.5, z = COOP.R.z - Math.cos(COOP.R.yaw) * 0.5; sparks(x, 1.35, z, 6, 0xffc070); HSND.boom({ x, y: 1.4, z }); if (host && Array.isArray(d.o) && Array.isArray(d.d)) { const o = new THREE.Vector3().fromArray(d.o), v = new THREE.Vector3().fromArray(d.d).normalize(); hResolveShot(o, v, !!d.lit, true); } return; }
       case 'hhit': if (!host && M[d.mi]) { const m = M[d.mi]; m.hFlinch = 0.3; hBloodFx(m.kind, d.p[0], d.p[1], d.p[2], Math.min(18, 4 + (d.n || 2) * 2)); } return;
-      case 'hkill': if (!host && M[d.mi]) hKill(M[d.mi], true); return;
+      case 'hkill': if (!host && M[d.mi]) hKill(M[d.mi], true, !!d.pm); return;
+      case 'hrev': if (!host && M[d.mi]) hRevive(M[d.mi], true); return;
       case 'htake': if (host && it && it.kind === 'hpick') { if (it.active) { hPickHide(it); coopSend({ t: 'htook', ls: L.seed, i: d.i, by: 'g' }); } else coopSend({ t: 'htook', ls: L.seed, i: d.i, by: 'x' }); } return;
       case 'htook': if (it && it.kind === 'hpick') { it.pend = 0; if (d.by === 'g' && !host) { if (it.active) hPickApply(it); } else { if (it.active) hPickHide(it); if (d.by === 'x') msg('Напарник уже забрал это.'); else msg('Напарник забрал ' + (it.sub === 'gun' ? 'ящик охраны' : 'патроны') + '.'); } } return;
-      case 'hdev': if (it && it.kind === 'hvalve') hValveFire(it); else if (it && it.kind === 'hpanel') hPanelFire(it); return;
+      case 'hdev': if (it && it.kind === 'hvalve') hValveFire(it); else if (it && it.kind === 'hpanel') hPanelFire(it); else if (it && it.kind === 'hflood') hFloodFire(it); else if (it && it.kind === 'hspk') hSpeakerFire(it); return;
       case 'hnoder': if (host && it && it.kind === 'hnode') hNodeKill(it, false); return;
       case 'hnode': if (it && it.kind === 'hnode') hNodeKill(it, true); return;
       case 'hrip': if (host && L.heart) { const s = L.heart.sacs[d.k]; if (s) hSacDamage(s, 3.5); } return;

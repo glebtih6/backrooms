@@ -3562,8 +3562,10 @@ function coopPeerOpts() {
   const o = { debug: QS.has('netdebug') ? 2 : 0 };
   const srv = QS.get('peerserver'); // test only: ?peerserver=host:port (local peerjs-server)
   if (srv) { const [h, pt] = srv.split(':'); Object.assign(o, { host: h, port: +pt || 9000, path: '/', secure: false, key: 'peerjs' }); }
-  // ICE: public STUN + the free PeerJS TURN relay (UDP and TCP, for networks that block UDP)
-  const ice = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+  // ICE: public STUN + free TURN relays. Metered Open Relay on 80/443 incl. TCP 443 and TURNS (TLS 443) —
+  // these pass mobile-carrier CGNAT/firewalls where UDP/3478 is blocked; PeerJS TURN kept as fallback.
+  const ice = [{ urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] },
+    { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp', 'turns:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' },
     { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478', 'turn:eu-0.turn.peerjs.com:3478?transport=tcp', 'turn:us-0.turn.peerjs.com:3478?transport=tcp'], username: 'peerjs', credential: 'peerjsp' }];
   const turn = QS.get('turn'); // test only: ?turn=host:port (local TURN relay, user/pass test/test)
   if (turn) ice.unshift({ urls: 'turn:' + turn, username: QS.get('turnuser') || 'test', credential: QS.get('turnpass') || 'test' });
@@ -3629,10 +3631,11 @@ async function coopJoin() {
   peer.on('open', () => {
     if (COOP.peer !== peer) return; coStat('Сервер найден. Соединяемся с комнатой ' + code + '…');
     const c = peer.connect(COOP_PREFIX + code, { reliable: true, serialization: 'json' }); coopBind(c);
-    clearTimeout(COOP.joinTO); COOP.joinTO = setTimeout(() => { if (COOP.peer === peer && !COOP.linked) { coStat('Не удалось соединиться с комнатой ' + code + '. Возможно, сеть блокирует прямое соединение (строгий NAT / мобильный интернет). Попробуйте Wi-Fi или другую сеть.', 'err'); coopLeave(true); } }, 25000);
+    clearTimeout(COOP.joinTO); COOP.joinTO = setTimeout(() => { if (COOP.peer === peer && !COOP.linked) { coStat('Не удалось соединиться. Попробуйте Wi‑Fi или раздайте интернет с одного телефона на другой', 'err'); coopLeave(true); coopRetryBtn(); } }, 15000);
   });
   peer.on('error', (e) => { if (COOP.peer === peer) coopPeerError(e); });
 }
+function coopRetryBtn() { const st = $('coStat'), b = document.createElement('button'); b.className = 'btn small'; b.textContent = 'Повторить'; b.style.marginLeft = '8px'; b.onclick = () => coopJoin(); st.appendChild(document.createElement('br')); st.appendChild(b); }
 function coopPeerError(e) {
   const t = e && e.type; const sig = t === 'network' || t === 'server-error' || t === 'socket-error' || t === 'socket-closed' || t === 'disconnected';
   if (COOP.linked && COOP.conn && COOP.conn.open && sig) return; // signaling lost, the P2P link itself is fine

@@ -193,6 +193,25 @@ body.touch #coopHud{bottom:auto;top:calc(122px + env(safe-area-inset-top));left:
 #coopDown .bar2 i{display:block;height:100%;width:0;background:#7f7}
 body.touch #coopDown p{font-size:13px}
 #tbPing{right:calc(30px + env(safe-area-inset-right));bottom:calc(214px + env(safe-area-inset-bottom))}
+#coop .comodes{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:0 0 10px}
+#coop .comode{margin:0;opacity:.6}
+#coop .comode.on{opacity:1;background:#e9d77a;color:#1a1505;border-color:#fff3b0}
+#coop p{line-height:1.4}
+#coop .colan{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 18px}
+#coop .colanside{flex:1 1 240px;max-width:380px}
+#coop .coqr{background:#fff;image-rendering:pixelated;image-rendering:crisp-edges;border:6px solid #fff;box-shadow:0 0 24px rgba(255,240,170,.35)}
+#coop .costep{font-size:16px;line-height:1.4;color:#efe3a8;margin-bottom:6px}
+#coop .costep small{display:block;color:#998;font-size:13px;margin-top:4px}
+#coop details{margin-top:8px;font-size:13px;color:#998;text-align:left}
+#coop summary{cursor:pointer;padding:4px 0}
+#coop .cotxtrow{display:flex;gap:6px;align-items:center;margin-top:6px}
+#coop textarea{flex:1;min-width:0;font:12px "Courier New",monospace;background:#111;color:#ffe27a;border:1px solid #8a7a3a;padding:6px;resize:vertical;user-select:text;-webkit-user-select:text;touch-action:manipulation}
+#coScan{position:fixed;inset:0;z-index:60;background:#000;display:flex;align-items:center;justify-content:center}
+#coScan video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#coScan .scanframe{position:relative;width:min(70vw,70vh);height:min(70vw,70vh);border:3px solid rgba(255,226,122,.9);box-shadow:0 0 0 100vmax rgba(0,0,0,.45);border-radius:10px;pointer-events:none}
+#coScan .scantxt{position:absolute;left:0;right:0;top:calc(10px + env(safe-area-inset-top));text-align:center;font-size:17px;color:#fff;text-shadow:0 0 6px #000,0 0 2px #000;padding:0 70px}
+#coScan .btn{position:absolute;right:calc(10px + env(safe-area-inset-right));top:calc(8px + env(safe-area-inset-top));margin:0}
+@media (max-height:500px){#coop .panel{padding:12px 16px;max-height:96vh;width:96%}#coop .panel h2{margin-bottom:6px;font-size:18px}#coop p{font-size:13px}#coop .btn{padding:8px 14px;font-size:16px;min-width:0}#coop .costep{font-size:14px}}
 </style>
 </head>
 <body>
@@ -239,6 +258,7 @@ body.touch #coopDown p{font-size:13px}
     <h2>ПАУЗА</h2>
     <div id="pauseInfo" style="margin-bottom:12px;color:#bbb"></div>
     <button class="btn" id="bResume" style="margin:6px auto">Продолжить</button>
+    <button class="btn hidden" id="bCoInvite" style="margin:6px auto">📶 Пригласить напарника снова (QR)</button>
     <button class="btn" id="bRestartLvl" style="margin:6px auto">Начать уровень заново</button>
     <button class="btn" id="bPauseSet" style="margin:6px auto">Настройки</button>
     <button class="btn" id="bToMenu" style="margin:6px auto">В главное меню</button>
@@ -274,15 +294,39 @@ body.touch #coopDown p{font-size:13px}
 <div id="coop" class="overlay hidden"><div class="panel">
   <h2>КООПЕРАТИВ · 2 ИГРОКА</h2>
   <div id="coMain">
-    <p>Играйте вдвоём через интернет. Один игрок создаёт комнату и сообщает другу короткий код, второй вводит этот код.</p>
-    <button class="btn" id="coCreate" style="margin:12px auto">Создать комнату</button>
-    <div class="row" style="align-items:center"><input id="coCodeIn" maxlength="12" placeholder="КОД" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"><button class="btn small" id="coJoin">Войти по коду</button></div>
+    <div class="comodes"><button class="btn small comode" id="coModeLan">📶 Рядом · без интернета</button><button class="btn small comode" id="coModeNet">🌐 Через интернет</button></div>
+    <div id="coLanMain">
+      <p>Телефоны рядом — интернет не нужен. Один телефон включает <b>точку доступа</b> (раздачу Wi‑Fi; мобильные данные можно выключить), второй подключается к ней по Wi‑Fi. Можно и просто подключиться к одному Wi‑Fi. Соединение — по QR-коду с экрана.</p>
+      <button class="btn" id="coLanHost" style="margin:10px auto 4px">Создать игру — показать QR</button>
+      <button class="btn" id="coLanJoin" style="margin:4px auto">Подключиться — сканировать QR</button>
+    </div>
+    <div id="coNetMain" class="hidden">
+      <p>Играйте вдвоём через интернет. Один игрок создаёт комнату и сообщает другу короткий код, второй вводит этот код. Если не соединяется (мобильный интернет часто режет такие соединения) — используйте режим «Рядом».</p>
+      <button class="btn" id="coCreate" style="margin:12px auto">Создать комнату</button>
+      <div class="row" style="align-items:center"><input id="coCodeIn" maxlength="12" placeholder="КОД" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"><button class="btn small" id="coJoin">Войти по коду</button></div>
+    </div>
+  </div>
+  <div id="coLan" class="hidden">
+    <div class="colan">
+      <canvas id="coQR" class="coqr hidden" width="10" height="10"></canvas>
+      <div class="colanside">
+        <div class="costep" id="coLanStep"></div>
+        <div class="row" id="coLanBtns"></div>
+        <details id="coLanTxt"><summary>Камера не работает? Обмен кодом текстом</summary>
+          <div class="cotxtrow"><button class="btn small" id="coLanCopy">Отправить мой код</button></div>
+          <div class="cotxtrow"><textarea id="coLanIn" rows="2" placeholder="Вставьте сюда код друга" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea><button class="btn small" id="coLanApply">Применить</button></div>
+        </details>
+      </div>
+    </div>
   </div>
   <div id="coRoom" class="hidden">
+    <div id="coRoomLan" class="hidden" style="color:#7f7;margin-bottom:6px">📶 Телефоны соединены напрямую по Wi‑Fi</div>
+    <div id="coRoomCode">
     <div style="color:#bba">Код комнаты — продиктуйте его другу:</div>
     <div class="cocode" id="coCode">·····</div>
     <div class="copeer" id="coPeer"></div>
     <button class="btn small" id="coCopy">Копировать код</button>
+    </div>
     <div class="coopts" id="coHostOpts">Сложность: <button class="btn small" id="coDiff">Нормальная</button> &nbsp; Начать с: <select id="coLvl"></select></div>
     <button class="btn" id="coStart" style="margin:10px auto" disabled>▶ Начать вместе</button>
   </div>
@@ -290,6 +334,7 @@ body.touch #coopDown p{font-size:13px}
   <div class="row"><button class="btn small" id="coBack">← Назад</button></div>
   <div class="cohelp" id="coHelp"></div>
 </div></div>
+<div id="coScan" class="hidden"><video id="coVid" playsinline muted autoplay></video><div class="scanframe"></div><div class="scantxt" id="coScanT">Наведите камеру на QR-код</div><button class="btn small" id="coScanX">✕ Отмена</button></div>
 <div id="coopDown" class="hidden"><h2>ВЫ ПОВЕРЖЕНЫ</h2><p id="coopDownT"></p><div class="bar2"><i id="coopDownBar"></i></div></div>
 <div id="loading" class="overlay">ЗАГРУЗКА...</div>
 <div id="fade"></div>
@@ -3541,6 +3586,7 @@ try { boot(); } catch (e) { window.__errors.push('BOOT: ' + e.message + '\n' + e
 // Everything below is inert until a co-op session starts, so single-player behaves exactly as before.
 'use strict';
 const COOP_PREFIX = 'brms-', COOP_KEY = 'backrooms_coop_v1', COOP_PROTO = 2, COOP_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const COOP_SRV_TO = 15000, COOP_JOIN_TO = 30000;
 const COOP_SEND_MS = 50, COOP_INTERP = 110, COOP_TIMEOUT = 12000, COOP_DOWN_T = 35, COOP_REVIVE_T = 3, COOP_COLORS = { host: 0xff8a1a, guest: 0x2ec8ff };
 const COOP = {
   on: false, role: null, linked: false, peer: null, conn: null, code: '', diff: 'normal', lv: 0, me: P,
@@ -3562,11 +3608,11 @@ function coopPeerOpts() {
   const o = { debug: QS.has('netdebug') ? 2 : 0 };
   const srv = QS.get('peerserver'); // test only: ?peerserver=host:port (local peerjs-server)
   if (srv) { const [h, pt] = srv.split(':'); Object.assign(o, { host: h, port: +pt || 9000, path: '/', secure: false, key: 'peerjs' }); }
-  // ICE: public STUN + free TURN relays. Metered Open Relay on 80/443 incl. TCP 443 and TURNS (TLS 443) —
-  // these pass mobile-carrier CGNAT/firewalls where UDP/3478 is blocked; PeerJS TURN kept as fallback.
-  const ice = [{ urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] },
-    { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp', 'turns:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' },
-    { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478', 'turn:eu-0.turn.peerjs.com:3478?transport=tcp', 'turn:us-0.turn.peerjs.com:3478?transport=tcp'], username: 'peerjs', credential: 'peerjsp' }];
+  // ICE: public STUN + the free Metered Open Relay TURN (UDP 80, TCP 443, TLS 443 — passes most firewalls).
+  // The old PeerJS TURN hosts (*.turn.peerjs.com) no longer resolve. Keep the list short: 5+ URLs slow gathering.
+  // On Russian mobile networks foreign relays are often throttled or blocked — the «Рядом» mode needs none of this.
+  const ice = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] },
+    { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443?transport=tcp', 'turns:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' }];
   const turn = QS.get('turn'); // test only: ?turn=host:port (local TURN relay, user/pass test/test)
   if (turn) ice.unshift({ urls: 'turn:' + turn, username: QS.get('turnuser') || 'test', credential: QS.get('turnpass') || 'test' });
   o.config = { iceServers: ice, sdpSemantics: 'unified-plan' };
@@ -3589,7 +3635,7 @@ function coopOpenLobby() {
 }
 function coopHelpHTML() {
   const E = TOUCH.on ? 'кнопку E' : '<b>E</b>';
-  return '<b>Как играть вдвоём:</b><br>• Нужен интернет у обоих. Хост выбирает сложность и уровень.<br>• Лабиринт и монстры общие. Монстры охотятся на ближайшего / самого шумного.<br>• Пойманный игрок «повержен»: напарник может поднять его, удерживая ' + E + ' рядом ~3 сек. Если повержены оба — возврат к контрольной точке.<br>• К ВЫХОДУ нужно прийти вдвоём. ' + (TOUCH.on ? 'Кнопка «ЗОВ»' : '<b>G</b>') + ' — позвать напарника (метка и звук; монстры тоже слышат!).<br>• Кооператив не трогает одиночные сохранения; рекорды хранятся отдельно.';
+  return '<b>Как играть вдвоём через интернет:</b><br>• Нужен интернет у обоих. Хост выбирает сложность и уровень. Если телефоны рядом — надёжнее режим «📶 Рядом» (без интернета).<br>• Лабиринт и монстры общие. Монстры охотятся на ближайшего / самого шумного.<br>• Пойманный игрок «повержен»: напарник может поднять его, удерживая ' + E + ' рядом ~3 сек. Если повержены оба — возврат к контрольной точке.<br>• К ВЫХОДУ нужно прийти вдвоём. ' + (TOUCH.on ? 'Кнопка «ЗОВ»' : '<b>G</b>') + ' — позвать напарника (метка и звук; монстры тоже слышат!).<br>• Кооператив не трогает одиночные сохранения; рекорды хранятся отдельно.';
 }
 function coopShowLobbyMain() { $('coMain').classList.remove('hidden'); $('coRoom').classList.add('hidden'); }
 function coopFillLvl() {
@@ -3610,8 +3656,9 @@ async function coopHost() {
     const code = coopGenCode(); let peer;
     try { peer = new Peer(COOP_PREFIX + code, coopPeerOpts()); } catch (e) { coStat('Ваш браузер не поддерживает WebRTC — кооператив недоступен.', 'err'); return; }
     COOP.peer = peer; COOP.code = code;
+    clearTimeout(COOP.srvTO); COOP.srvTO = setTimeout(() => { if (COOP.peer === peer && !peer.open) coopNetFail('Сервер соединения не отвечает — похоже, интернет ограничен (зарубежные серверы часто режутся).', 'host'); }, COOP_SRV_TO);
     peer.on('open', () => {
-      if (COOP.peer !== peer) return; $('coCode').textContent = code; $('coPeer').textContent = 'ID комнаты: ' + COOP_PREFIX + code; coStat('Ждём напарника…');
+      if (COOP.peer !== peer) return; clearTimeout(COOP.srvTO); $('coCode').textContent = code; $('coPeer').textContent = 'ID комнаты: ' + COOP_PREFIX + code; coStat('Ждём напарника…');
       clearInterval(COOP.waitT); COOP.waitT = setInterval(() => { if (!COOP.linked && COOP.peer === peer && !COOP.on && !$('coStat').classList.contains('err')) coStat('Ждём напарника' + '.'.repeat(1 + Math.floor(Date.now() / 600) % 3)); }, 600);
     });
     peer.on('connection', (c) => coopIncoming(c));
@@ -3628,25 +3675,43 @@ async function coopJoin() {
   if (COOP.role !== 'guest') return;
   let peer; try { peer = new Peer(coopPeerOpts()); } catch (e) { coStat('Ваш браузер не поддерживает WebRTC — кооператив недоступен.', 'err'); return; }
   COOP.peer = peer;
+  clearTimeout(COOP.srvTO); COOP.srvTO = setTimeout(() => { if (COOP.peer === peer && !peer.open) coopNetFail('Сервер соединения не отвечает — похоже, интернет ограничен (зарубежные серверы часто режутся).', 'guest'); }, COOP_SRV_TO);
   peer.on('open', () => {
-    if (COOP.peer !== peer) return; coStat('Сервер найден. Соединяемся с комнатой ' + code + '…');
+    if (COOP.peer !== peer) return; clearTimeout(COOP.srvTO); coStat('Сервер найден. Соединяемся с комнатой ' + code + '…');
     const c = peer.connect(COOP_PREFIX + code, { reliable: true, serialization: 'json' }); coopBind(c);
-    clearTimeout(COOP.joinTO); COOP.joinTO = setTimeout(() => { if (COOP.peer === peer && !COOP.linked) { coStat('Не удалось соединиться. Попробуйте Wi‑Fi или раздайте интернет с одного телефона на другой', 'err'); coopLeave(true); coopRetryBtn(); } }, 15000);
+    try { // live progress + fail fast instead of waiting for the timeout
+      const pc = c.peerConnection;
+      if (pc) pc.addEventListener('iceconnectionstatechange', () => {
+        if (COOP.peer !== peer || COOP.linked) return; const st = pc.iceConnectionState;
+        if (st === 'checking') coStat('Комната найдена. Ищем путь между телефонами…');
+        else if (st === 'failed') coopNetFail('Комната найдена, но телефоны не смогли соединиться: сеть оператора не пропускает прямое соединение, а резервный сервер (TURN) недоступен.', 'guest');
+      });
+    } catch (e) { }
+    clearTimeout(COOP.joinTO); COOP.joinTO = setTimeout(() => { if (COOP.peer === peer && !COOP.linked) coopNetFail('Не удалось соединиться за ' + Math.round(COOP_JOIN_TO / 1000) + ' секунд.', 'guest'); }, COOP_JOIN_TO);
   });
   peer.on('error', (e) => { if (COOP.peer === peer) coopPeerError(e); });
 }
-function coopRetryBtn() { const st = $('coStat'), b = document.createElement('button'); b.className = 'btn small'; b.textContent = 'Повторить'; b.style.marginLeft = '8px'; b.onclick = () => coopJoin(); st.appendChild(document.createElement('br')); st.appendChild(b); }
+function coopStatBtn(text, fn) { const st = $('coStat'), b = document.createElement('button'); b.className = 'btn small'; b.textContent = text; b.style.margin = '8px 4px 0'; b.onclick = () => { AU.click(); fn(); }; if (!st.querySelector('button')) st.appendChild(document.createElement('br')); st.appendChild(b); }
+function coopRetryBtn(role) { coopStatBtn('Повторить', () => (role === 'host' ? coopHost() : coopJoin())); }
+function coopLanBtn() { if (typeof lanMode !== 'function') return; coopStatBtn('📶 Играть рядом без интернета', () => { coopLeave(true); COOP.role = null; coopShowLobbyMain(); lanMode('lan'); coStat(''); }); }
+// internet path failed: say why, then offer a retry and the offline «Рядом» mode
+function coopNetFail(why, role) {
+  clearTimeout(COOP.joinTO); clearTimeout(COOP.srvTO); if (COOP.on) { msg(why); return; }
+  coopLeave(true); if (role === 'host') coopShowLobbyMain();
+  coStat(why + ' Если вы рядом друг с другом — используйте режим «📶 Рядом»: ему интернет не нужен.', 'err'); coopRetryBtn(role); coopLanBtn();
+}
 function coopPeerError(e) {
   const t = e && e.type; const sig = t === 'network' || t === 'server-error' || t === 'socket-error' || t === 'socket-closed' || t === 'disconnected';
   if (COOP.linked && COOP.conn && COOP.conn.open && sig) return; // signaling lost, the P2P link itself is fine
   const txt = t === 'peer-unavailable' ? 'Комната «' + COOP.code + '» не найдена. Проверьте код — или друг ещё не создал комнату / уже закрыл её.'
     : t === 'browser-incompatible' ? 'Ваш браузер не поддерживает WebRTC — кооператив недоступен.'
-      : sig ? 'Нет связи с сервером соединения. Проверьте интернет и попробуйте ещё раз.'
-        : t === 'webrtc' ? 'Не удалось установить прямое соединение (строгий NAT / мобильная сеть). Попробуйте другую сеть.'
+      : sig ? 'Нет связи с сервером соединения — проверьте интернет (зарубежные серверы на мобильном интернете часто режутся).'
+        : t === 'webrtc' ? 'Не удалось установить соединение (сеть оператора не пропускает прямое соединение).'
           : 'Ошибка сети' + (t ? ' (' + t + ')' : '') + '. Попробуйте ещё раз.';
   if (COOP.on) { if (COOP.role === 'host' && sig) return; msg(txt); return; }
-  clearTimeout(COOP.joinTO); coStat(txt, 'err');
+  clearTimeout(COOP.joinTO); clearTimeout(COOP.srvTO);
   const role = COOP.role; coopLeave(true); if (role === 'host') coopShowLobbyMain();
+  coStat(txt, 'err'); if (t !== 'peer-unavailable' && t !== 'browser-incompatible') { coopRetryBtn(role); coopLanBtn(); }
 }
 function coopIncoming(c) {
   if (COOP.conn && COOP.conn.open) { c.on('open', () => { try { c.send({ t: 'full' }); } catch (e) { } setTimeout(() => { try { c.close(); } catch (e) { } }, 600); }); return; }
@@ -3664,7 +3729,7 @@ function coopBind(c) {
   c.on('error', () => { if (COOP.conn === c && !c.open) coopPartnerGone('lost'); });
 }
 function coopLeave(silent) {
-  clearTimeout(COOP.joinTO); clearInterval(COOP.waitT);
+  clearTimeout(COOP.joinTO); clearTimeout(COOP.srvTO); clearInterval(COOP.waitT);
   if (COOP.conn) { const c = COOP.conn; COOP.conn = null; try { if (c.open) c.send({ t: 'bye' }); } catch (e) { } setTimeout(() => { try { c.close(); } catch (e) { } }, 150); }
   if (COOP.peer) { const p = COOP.peer; COOP.peer = null; setTimeout(() => { try { p.destroy(); } catch (e) { } }, 250); }
   COOP.linked = false; COOP.R.ready = false;
@@ -4103,7 +4168,7 @@ function coopPlaySfx(list) { if (!list || !AU.ctx) return; for (const [k, o] of 
     return h;
   };
   const _menu = toMenu;
-  toMenu = function () { if (COOP.on || COOP.peer) coopEndSession(); return _menu(); };
+  toMenu = function () { if (COOP.on || COOP.peer || COOP.conn || COOP.lan) coopEndSession(); return _menu(); };
   const _ab = window.androidBack;
   window.androidBack = function () {
     try {
@@ -4275,9 +4340,9 @@ function coopPartnerGone(why) {
   }
   if (!wasLinked) return;
   if (COOP.av) { COOP.av.root.visible = false; COOP.av.marker.visible = false; COOP.av.spot.intensity = 0; }
-  if (COOP.role === 'host') { msg('Напарник отключился. Вы продолжаете один.'); toast('Напарник отключился (' + reason + '). Он может вернуться по коду ' + COOP.code + '.', 6000); }
+  if (COOP.role === 'host') { msg('Напарник отключился. Вы продолжаете один.'); toast('Напарник отключился (' + reason + '). ' + (COOP.lan ? 'Вернуть его: пауза → «Пригласить напарника снова».' : 'Он может вернуться по коду ' + COOP.code + '.'), 6000); }
   else {
-    coopUnpuppet(); msg('Связь с хостом потеряна. Вы продолжаете один.'); toast('Хост отключился (' + reason + ') — дальше вы играете один.', 6000);
+    coopUnpuppet(); msg('Связь с хостом потеряна. Вы продолжаете один.'); toast('Хост отключился (' + reason + ') — дальше вы играете один.' + (COOP.lan ? ' Переподключиться: пауза → «Подключиться к хосту снова».' : ''), 6000);
     if (COOP.peer) { const p = COOP.peer; COOP.peer = null; setTimeout(() => { try { p.destroy(); } catch (e) { } }, 300); }
   }
   if (P.down) P.downT = Math.min(P.downT, 2.2);
@@ -4308,7 +4373,7 @@ function coopOnMsg(d) {
           else if (G.state !== 'ending') coopSend({ t: 'start', lv: G.levelIdx, seed: L.seed, loop: G.loop || 0, diff: COOP.diff, ng: false, st: coopJoinState() });
           else coopSend({ t: 'msg', s: 'Хост сейчас на экране концовки — ждём, когда он начнёт игру.' });
         } else { coStat('Напарник подключился! Выберите сложность и нажмите «Начать вместе».', 'ok'); $('coStart').disabled = false; coopLobbyInfo(); AU.pickup(); }
-      } else if (!COOP.on) coStat('Подключено к комнате ' + COOP.code + '! Ждём, когда хост начнёт игру…', 'ok');
+      } else if (!COOP.on) coStat('Подключено' + (COOP.lan ? '' : ' к комнате ' + COOP.code) + '! Ждём, когда хост начнёт игру…', 'ok');
       return;
     case 'full': coStat('Комната уже занята (максимум 2 игрока).', 'err'); coopLeave(true); return;
     case 'bye': coopPartnerGone('bye'); return;
@@ -4440,7 +4505,7 @@ function coopHudTick() {
   const el = $('coopHud'), R = COOP.R, me = COOP.me; if (!el) return;
   const col = '#' + new THREE.Color(COOP.av ? COOP.av.color : 0x2ec8ff).getHexString();
   let h;
-  if (!COOP.linked) h = '<span style="color:#f88">● Напарник не в игре</span>' + (COOP.role === 'host' && COOP.peer ? ' · код комнаты <b>' + COOP.code + '</b>' : '');
+  if (!COOP.linked) h = '<span style="color:#f88">● Напарник не в игре</span>' + (COOP.lan ? ' · вернуть: пауза → QR' : COOP.role === 'host' && COOP.peer ? ' · код комнаты <b>' + COOP.code + '</b>' : '');
   else if (!R.ready || COOP.rls !== L.seed) h = '<span style="color:' + col + '">●</span> Напарник: загрузка уровня…';
   else {
     const rx = R.ix != null ? R.ix : R.x, rz = R.iz != null ? R.iz : R.z, dx = rx - P.x, dz = rz - P.z, d = Math.hypot(dx, dz);
@@ -4491,6 +4556,398 @@ function coopInit() {
 try { coopInit(); } catch (e) { console.error('coop init', e); }
 window.__coop = COOP;
 
+</script>
+<script>
+// ====================== CO-OP «РЯДОМ»: two phones on one Wi‑Fi / hotspot, NO internet ======================
+// Plain WebRTC without STUN/TURN and without a signaling server: the offer/answer are packed into a short code
+// and exchanged as QR codes (camera) or as text. Once the data channel opens it plugs into the normal co-op code
+// through coopBind() — LanConn mimics the small part of the PeerJS DataConnection API that co-op uses.
+'use strict';
+const LAN = { pc: null, conn: null, cam: null, scan: null, offerU: '', mid: '0', code: '', gen: 0, tmo: 0, waitT: 0, applied: false, qrP: null, mode: 'lan' };
+const LAN_TAG = 'B1';
+class LanConn {
+  constructor(pc) { this.pc = this.peerConnection = pc; this.dc = null; this.open = false; this.closed = false; this.h = {}; }
+  on(ev, fn) { (this.h[ev] || (this.h[ev] = [])).push(fn); return this; }
+  emit(ev, a) { for (const f of (this.h[ev] || []).slice()) { try { f(a); } catch (e) { console.warn('lan ' + ev, e); } } }
+  attach(dc) {
+    this.dc = dc;
+    dc.onopen = () => { if (this.closed || this.open) return; this.open = true; this.emit('open'); };
+    dc.onmessage = (e) => { if (typeof e.data !== 'string') return; let d; try { d = JSON.parse(e.data); } catch (er) { return; } this.emit('data', d); };
+    dc.onclose = () => this.close();
+    dc.onerror = (e) => this.emit('error', e);
+    if (dc.readyState === 'open') dc.onopen();
+  }
+  send(o) {
+    const dc = this.dc; if (!this.open || !dc || dc.readyState !== 'open') throw new Error('closed');
+    if (o && o.t === 's' && dc.bufferedAmount > 65536) return; // weak Wi‑Fi: drop stale state snapshots instead of queueing lag
+    dc.send(JSON.stringify(o));
+  }
+  close() {
+    if (this.closed) return; this.closed = true; this.open = false;
+    try { if (this.dc) this.dc.close(); } catch (e) { } try { this.pc.close(); } catch (e) { }
+    this.emit('close');
+  }
+}
+// ---------------- compact offer/answer codes ----------------
+const lanB64 = (u8) => btoa(String.fromCharCode.apply(null, Array.from(u8))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+function lanUnB64(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+const lanHex = (u8, sep) => Array.from(u8, (b) => (b < 16 ? '0' : '') + b.toString(16)).join(sep || '');
+function lanParseSdp(sdp) {
+  const g = (k) => { const m = new RegExp('^a=' + k + ':(.+)$', 'm').exec(sdp); return m ? m[1].trim() : ''; };
+  const fp = g('fingerprint').split(/\s+/), cands = [];
+  for (const line of sdp.split(/\r?\n/)) {
+    const m = /^a=candidate:\S+ (\d+) (\S+) (\d+) (\S+) (\d+) typ (\S+)(.*)$/.exec(line.trim());
+    if (!m || m[1] !== '1' || m[2].toLowerCase() !== 'udp') continue;
+    const cost = /network-cost (\d+)/.exec(m[7]);
+    cands.push({ ip: m[4], port: +m[5], typ: m[6], prio: +m[3], cost: cost ? +cost[1] : 10 });
+  }
+  return { u: g('ice-ufrag'), p: g('ice-pwd'), alg: (fp[0] || '').toLowerCase(), hex: fp[1] || '', setup: g('setup'), mid: g('mid') || '0', cands };
+}
+const lanIsV4 = (ip) => /^\d+\.\d+\.\d+\.\d+$/.test(ip), lanIsMdns = (ip) => /\.local$/i.test(ip);
+function lanPickCands(cs) {
+  const seen = new Set(); let out = [];
+  for (const c of cs.slice().sort((a, b) => a.cost - b.cost || b.prio - a.prio)) { // Wi‑Fi / hotspot before mobile data
+    const k = c.ip + ':' + c.port; if (seen.has(k) || !c.port || /^(127\.|0\.0\.0\.0$|::1$)/.test(c.ip)) continue; seen.add(k); out.push(c);
+  }
+  const v4 = out.filter((c) => lanIsV4(c.ip) || lanIsMdns(c.ip)); if (v4.length) out = v4; // IPv6 here is almost always the mobile network
+  return out.slice(0, 4);
+}
+function lanEncode(type, d, extra) {
+  const fp = d.alg === 'sha-256' ? lanB64(d.hex.split(':').map((h) => parseInt(h, 16))) : d.alg + '=' + d.hex.replace(/:/g, '');
+  const st = { actpass: 'x', active: 'a', passive: 'p' }[d.setup] || 'x';
+  const cs = lanPickCands(d.cands).map((c) => {
+    const m = /^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})\.local$/.exec(c.ip); // Chrome's mDNS name = UUID.local
+    return (m ? '*' + lanB64(m.slice(1).join('').match(/../g).map((h) => parseInt(h, 16))) : c.ip) + ':' + c.port;
+  });
+  return [LAN_TAG + type, d.u, d.p, fp, st, cs.join(','), extra || ''].join('~');
+}
+function lanDecode(s) {
+  s = String(s || '').replace(/\s+/g, ''); const i = s.indexOf(LAN_TAG); if (i < 0) return null; s = s.slice(i);
+  const f = s.split('~'); if (f.length < 6 || !f[1] || !f[2] || !f[3]) return null;
+  const type = f[0].charAt(2); if (type !== 'o' && type !== 'a') return null;
+  try {
+    let alg = 'sha-256', hex;
+    if (f[3].includes('=')) { const k = f[3].indexOf('='); alg = f[3].slice(0, k).toLowerCase(); hex = (f[3].slice(k + 1).match(/../g) || []).join(':').toUpperCase(); }
+    else { const u = lanUnB64(f[3]); if (u.length !== 32) return null; hex = lanHex(u, ':').toUpperCase(); }
+    const setup = { x: 'actpass', a: 'active', p: 'passive' }[f[4]] || 'actpass';
+    const cands = (f[5] ? f[5].split(',') : []).map((c) => {
+      const k = c.lastIndexOf(':'); let ip = c.slice(0, k); const port = +c.slice(k + 1);
+      if (ip.charAt(0) === '*') { const h = lanHex(lanUnB64(ip.slice(1))); if (h.length !== 32) return null; ip = h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20) + '.local'; }
+      return /^[0-9a-zA-Z.:\-]+$/.test(ip) && port > 0 && port < 65536 ? { ip, port } : null;
+    }).filter(Boolean);
+    if (!/^[A-Za-z0-9+/]+$/.test(f[1] + f[2])) return null;
+    return { type, u: f[1], p: f[2], alg, hex, setup, cands, extra: f[6] || '' };
+  } catch (e) { return null; }
+}
+function lanSdp(d, mid) {
+  const o = ['v=0', 'o=- ' + (1e6 + Math.floor(Math.random() * 1e9)) + ' 2 IN IP4 127.0.0.1', 's=-', 't=0 0', 'a=group:BUNDLE ' + mid, 'a=msid-semantic: WMS',
+    'm=application 9 UDP/DTLS/SCTP webrtc-datachannel', 'c=IN IP4 0.0.0.0'];
+  d.cands.forEach((c, i) => o.push('a=candidate:' + (i + 1) + ' 1 udp ' + (2122260223 - i * 1000) + ' ' + c.ip + ' ' + c.port + ' typ host generation 0'));
+  o.push('a=ice-ufrag:' + d.u, 'a=ice-pwd:' + d.p, 'a=ice-options:trickle', 'a=fingerprint:' + d.alg + ' ' + d.hex, 'a=setup:' + d.setup, 'a=mid:' + mid, 'a=sctp-port:5000', 'a=max-message-size:262144');
+  return o.join('\r\n') + '\r\n';
+}
+function lanGather(pc, ms) {
+  return new Promise((res) => {
+    if (pc.iceGatheringState === 'complete') return res();
+    const t = setTimeout(res, ms);
+    pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') { clearTimeout(t); res(); } });
+  });
+}
+// ---------------- QR: draw + camera scanner ----------------
+function lanLoadQR() {
+  if (window.qrcode && window.jsQR) return Promise.resolve();
+  if (LAN.qrP) return LAN.qrP;
+  return (LAN.qrP = new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = 'qr.min.js';
+    s.onload = () => (window.qrcode ? res() : rej(new Error('qr missing'))); s.onerror = () => { LAN.qrP = null; rej(new Error('load failed')); };
+    document.head.appendChild(s);
+  }));
+}
+function lanDrawQR(text) {
+  const cv = $('coQR'), q = qrcode(0, text.length <= 200 ? 'M' : 'L'); q.addData(text, 'Byte'); q.make();
+  const n = q.getModuleCount(), quiet = 3, dpr = Math.min(3, window.devicePixelRatio || 1);
+  const css = Math.max(150, Math.min(300, innerHeight * 0.6, innerWidth * 0.8));
+  const mod = Math.max(2, Math.floor(css * dpr / (n + quiet * 2))), px = mod * (n + quiet * 2);
+  cv.width = cv.height = px; cv.style.width = cv.style.height = Math.round(px / dpr) + 'px';
+  const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, px, px); g.fillStyle = '#000';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) g.fillRect((c + quiet) * mod, (r + quiet) * mod, mod, mod);
+  cv.classList.remove('hidden');
+}
+async function lanCamOn() {
+  if (LAN.cam && LAN.cam.getTracks().some((t) => t.readyState === 'live')) return LAN.cam;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { const e = new Error('no camera api'); e.name = 'NoApi'; throw e; }
+  const s = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } });
+  if (LAN.cam && LAN.cam !== s) LAN.cam.getTracks().forEach((t) => t.stop());
+  return (LAN.cam = s);
+}
+// camera with a time limit: an unanswered permission prompt must not block the QR forever
+function lanCamTry(ms) {
+  return new Promise((res) => {
+    let done = false; const t = setTimeout(() => { done = true; res({ name: 'Timeout' }); }, ms);
+    lanCamOn().then(() => { if (done) { if (!LAN.scan) lanCamOff(); return; } clearTimeout(t); done = true; res(null); }, (e) => { if (done) return; clearTimeout(t); done = true; res(e || {}); });
+  });
+}
+function lanCamOff() { if (LAN.cam) { LAN.cam.getTracks().forEach((t) => t.stop()); LAN.cam = null; } const v = $('coVid'); if (v) v.srcObject = null; }
+function lanCamErr(e) {
+  const n = e && e.name;
+  if (n === 'NotAllowedError' || n === 'SecurityError') return 'Нет доступа к камере. Разрешите камеру для этого сайта (значок слева от адреса → Разрешения) или обменяйтесь кодом текстом (ниже).';
+  if (n === 'NotFoundError' || n === 'OverconstrainedError') return 'Камера не найдена — обменяйтесь кодом текстом (ниже).';
+  if (n === 'NotReadableError' || n === 'AbortError') return 'Камера занята другим приложением. Закройте его и попробуйте снова.';
+  if (n === 'NoApi') return 'Камера недоступна в этом браузере' + (location.protocol === 'https:' ? '' : ' (нужен адрес https://)') + ' — обменяйтесь кодом текстом (ниже).';
+  return 'Не удалось включить камеру — обменяйтесь кодом текстом (ниже).';
+}
+// onCode(text) -> true: accept (scanner closes, camera stays on until the caller turns it off) | string: show and keep scanning
+async function lanScanOpen(hint, onCode) {
+  lanScanClose(true);
+  const ov = $('coScan'), vid = $('coVid'), tx = $('coScanT'), S = LAN.scan = { t: 0, ht: 0, det: null, cv: null, n: 0 };
+  tx.textContent = hint; ov.classList.remove('hidden');
+  try { await lanCamOn(); } catch (e) { if (LAN.scan === S) { lanScanClose(); coStat(lanCamErr(e), 'err'); $('coLanTxt').open = true; } return; }
+  if (LAN.scan !== S) return;
+  vid.srcObject = LAN.cam; try { await vid.play(); } catch (e) { }
+  try { if (window.BarcodeDetector && (await BarcodeDetector.getSupportedFormats()).includes('qr_code')) S.det = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { S.det = null; }
+  if (!S.det) { try { await lanLoadQR(); } catch (e) { } }
+  const tick = async () => {
+    if (LAN.scan !== S) return;
+    let txt = null;
+    try {
+      if (vid.readyState >= 2 && vid.videoWidth) {
+        if (S.det) { const r = await S.det.detect(vid); if (r && r.length) txt = r[0].rawValue; }
+        else if (window.jsQR) {
+          const vw = vid.videoWidth, vh = vid.videoHeight, full = S.n++ % 3 === 2; // mostly the centre square (fast), sometimes the whole frame
+          const sw = full ? vw : Math.min(vw, vh) * 0.85, sh = full ? vh : sw, k = Math.min(1, (full ? 720 : 560) / Math.max(sw, sh));
+          const w = Math.round(sw * k), h = Math.round(sh * k);
+          const cv = S.cv || (S.cv = document.createElement('canvas')); cv.width = w; cv.height = h;
+          const g = cv.getContext('2d', { willReadFrequently: true }); g.drawImage(vid, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, w, h);
+          const c = jsQR(g.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' }); if (c && c.data) txt = c.data;
+        }
+      }
+    } catch (e) { if (S.det) { S.det = null; try { await lanLoadQR(); } catch (er) { } } }
+    if (LAN.scan !== S) return;
+    if (txt) {
+      const r = onCode(txt);
+      if (r === true) { if (navigator.vibrate) try { navigator.vibrate(60); } catch (e) { } lanScanClose(true); return; }
+      if (typeof r === 'string') { tx.textContent = r; clearTimeout(S.ht); S.ht = setTimeout(() => { if (LAN.scan === S) tx.textContent = hint; }, 2600); }
+    }
+    S.t = setTimeout(tick, txt ? 700 : 110);
+  };
+  tick();
+}
+function lanScanClose(keepCam) { const S = LAN.scan; LAN.scan = null; if (S) { clearTimeout(S.t); clearTimeout(S.ht); } $('coScan').classList.add('hidden'); if (!keepCam) lanCamOff(); }
+// ---------------- connection lifecycle ----------------
+function lanNewConn() {
+  lanClosePC();
+  let pc; try { pc = new RTCPeerConnection({ iceServers: [] }); } catch (e) { return null; }
+  const conn = new LanConn(pc); LAN.pc = pc; LAN.conn = conn; LAN.applied = false;
+  pc.addEventListener('iceconnectionstatechange', () => {
+    if (LAN.pc !== pc) return; const s = pc.iceConnectionState;
+    if (s === 'checking' && LAN.applied) lanStep('Соединяемся по Wi‑Fi…');
+    if (s === 'failed' && LAN.applied && COOP.role === 'host') lanFail();
+  });
+  coopBind(conn);
+  conn.on('open', () => lanOpened(conn));
+  return conn;
+}
+function lanClosePC() {
+  clearTimeout(LAN.tmo); clearTimeout(LAN.waitT); const c = LAN.conn; LAN.conn = null; LAN.pc = null; LAN.applied = false;
+  if (c && c !== COOP.conn) try { c.close(); } catch (e) { }
+}
+function lanCleanup() { LAN.gen++; lanScanClose(); lanClosePC(); lanCamOff(); }
+function lanOpened(conn) {
+  if (COOP.conn !== conn) return;
+  if (LAN.conn === conn) { LAN.conn = null; LAN.pc = null; } clearTimeout(LAN.tmo); clearTimeout(LAN.waitT);
+  lanScanClose(); $('coQR').classList.add('hidden'); LAN.code = '';
+  if (navigator.vibrate) try { navigator.vibrate([40, 60, 40]); } catch (e) { }
+  if (COOP.on) { $('coop').classList.add('hidden'); coopResume(true); lanPauseBtn(); return; } // re-joined during a running game
+  $('coLan').classList.add('hidden');
+  if (COOP.role === 'host') {
+    $('coRoom').classList.remove('hidden'); $('coRoomCode').classList.add('hidden'); $('coRoomLan').classList.remove('hidden'); $('coStart').disabled = true;
+    coopFillLvl(); coStat('Соединено! Ждём ответа напарника…', 'ok');
+  } else coStat('Соединено! Ждём, когда хост начнёт игру…', 'ok');
+}
+function lanFail() {
+  clearTimeout(LAN.tmo); if (!LAN.pc || COOP.linked) return;
+  lanClosePC(); $('coQR').classList.add('hidden');
+  lanStep('Не получилось соединиться.');
+  coStat('Телефоны не видят друг друга. Проверьте: оба в одной Wi‑Fi сети (точка доступа одного телефона или общий роутер), VPN выключен. Если раздаёт один из телефонов и не выходит — попробуйте, чтобы раздавал другой, или подключите оба к роутеру.', 'err');
+  lanBtns([['🔄 Попробовать снова', lanHostStart]]);
+}
+// ---------------- UI ----------------
+function lanStep(h) { $('coLanStep').innerHTML = h; }
+function lanBtns(list) {
+  const b = $('coLanBtns'); b.innerHTML = '';
+  for (const [t, fn] of list) { const x = document.createElement('button'); x.className = 'btn small'; x.textContent = t; x.onclick = () => { AU.click(); fn(); }; b.appendChild(x); }
+}
+function lanView(role) {
+  $('coMain').classList.add('hidden'); $('coRoom').classList.add('hidden'); $('coLan').classList.remove('hidden');
+  $('coQR').classList.add('hidden'); $('coLanIn').value = ''; $('coLanTxt').open = false; $('coLanBtns').innerHTML = '';
+  $('coLanCopy').disabled = true; $('coLanIn').placeholder = role === 'host' ? 'Вставьте сюда ответный код друга' : 'Вставьте сюда код друга (создателя игры)';
+  $('coHelp').innerHTML = lanHelpHTML();
+}
+function lanNetNote(cs) {
+  const ips = Array.from(new Set(cs.filter((c) => lanIsV4(c.ip)).map((c) => c.ip)));
+  return ips.length ? '<small>Ваш адрес в сети: ' + ips.join(', ') + '</small>' : '';
+}
+function lanHelpHTML() {
+  return '<b>Как играть рядом без интернета:</b><br>• На одном телефоне включите <b>точку доступа</b> (Настройки → Точка доступа / Режим модема). Мобильный интернет можно выключить.<br>• Второй телефон подключается к этой Wi‑Fi сети. Если телефон пишет «Без доступа к интернету» — всё равно оставайтесь подключёнными.<br>• Игру можно открыть без интернета, если вы хотя бы раз заходили на сайт (или установили его на экран «Домой»).<br>• Создатель игры показывает QR, друг сканирует его и показывает свой QR в ответ — всё, вы соединены.<br>• Не соединяется? Выключите VPN, попробуйте поменяться, кто раздаёт Wi‑Fi, или подключите оба телефона к одному роутеру.';
+}
+function lanMode(m) {
+  LAN.mode = m === 'net' ? 'net' : 'lan';
+  $('coLanMain').classList.toggle('hidden', LAN.mode !== 'lan'); $('coNetMain').classList.toggle('hidden', LAN.mode === 'lan');
+  $('coModeLan').classList.toggle('on', LAN.mode === 'lan'); $('coModeNet').classList.toggle('on', LAN.mode !== 'lan');
+  $('coHelp').innerHTML = LAN.mode === 'lan' ? lanHelpHTML() : coopHelpHTML();
+  try { localStorage.setItem('backrooms_comode', LAN.mode); } catch (e) { }
+}
+function lanPauseBtn() {
+  const b = $('bCoInvite'); if (!b) return;
+  const show = COOP.on && COOP.lan && !COOP.linked;
+  b.classList.toggle('hidden', !show); if (show) b.textContent = COOP.role === 'host' ? '📶 Пригласить напарника снова (QR)' : '📶 Подключиться к хосту снова (QR)';
+}
+function lanShowCode() { const c = LAN.code; $('coLanCopy').disabled = !c; }
+// ---------------- host ----------------
+async function lanHostStart() {
+  if (!COOP.on) { coopLeave(true); COOP.role = 'host'; COOP.diff = SAVE.settings.diff || 'normal'; COOP.code = ''; }
+  lanCleanup(); COOP.lan = true; lanView('host'); coStat(''); LAN.code = ''; lanShowCode();
+  lanStep('Готовим QR-код…');
+  if (!window.RTCPeerConnection) { lanStep(''); coStat('Этот браузер не поддерживает прямое соединение (WebRTC). Обновите Chrome / Safari.', 'err'); return; }
+  const my = ++LAN.gen;
+  try { await lanLoadQR(); } catch (e) { if (my === LAN.gen) { lanStep(''); coStat('Не удалось загрузить модуль QR-кодов. Откройте игру один раз с интернетом — после этого она работает офлайн.', 'err'); } return; }
+  // camera first: with camera permission the browser writes real LAN addresses into the code instead of
+  // mDNS names (*.local), which some phones / hotspots fail to resolve
+  lanStep('Готовим QR-код… <small>Разрешите доступ к камере — им вы отсканируете ответ друга.</small>');
+  const camErr = await lanCamTry(12000);
+  if (my !== LAN.gen) { lanCamOff(); return; }
+  const conn = lanNewConn(); if (!conn) { lanCamOff(); coStat('Не удалось создать соединение (WebRTC).', 'err'); return; }
+  const pc = conn.pc;
+  conn.attach(pc.createDataChannel('coop', { ordered: true }));
+  try { await pc.setLocalDescription(await pc.createOffer()); } catch (e) { lanCamOff(); if (my === LAN.gen) coStat('Ошибка WebRTC: ' + (e && e.message), 'err'); return; }
+  await lanGather(pc, 4000); lanCamOff();
+  if (my !== LAN.gen || LAN.pc !== pc) return;
+  const d = lanParseSdp(pc.localDescription.sdp), cs = lanPickCands(d.cands);
+  if (!cs.length) {
+    lanStep('Нет сети.'); coStat('Телефон не подключён ни к одной сети. Включите точку доступа (раздачу Wi‑Fi) или подключитесь к Wi‑Fi, затем нажмите «Новый код».', 'err');
+    lanBtns([['🔄 Новый код', lanHostStart]]); return;
+  }
+  LAN.offerU = d.u; LAN.mid = d.mid; LAN.code = lanEncode('o', d, d.mid === '0' ? '' : d.mid); lanShowCode();
+  lanDrawQR(LAN.code);
+  lanStep('<b>1.</b> Друг нажимает «Подключиться» и наводит камеру на этот QR.<br><b>2.</b> На его экране появится ответный QR — отсканируйте его.' + lanNetNote(cs));
+  lanBtns([['📷 Сканировать ответ друга', lanHostScan], ['🔄 Новый код', lanHostStart]]);
+  if (camErr && camErr.name !== 'Timeout') { coStat(lanCamErr(camErr), 'err'); $('coLanTxt').open = true; }
+}
+function lanHostScan() { lanScanOpen('Наведите камеру на ответный QR-код на экране друга', (t) => lanHostApply(t)); }
+function lanHostApply(txt) {
+  const d = lanDecode(txt);
+  if (!d) return 'Это не код этой игры.';
+  if (d.type === 'o') return 'Это QR создателя игры, а нужен ответный QR с телефона друга.';
+  if (!LAN.pc || !LAN.offerU) return 'Сначала создайте свой QR-код.';
+  if (d.extra && d.extra !== LAN.offerU) return 'Этот ответ — к старому QR-коду. Пусть друг отсканирует ваш текущий QR заново.';
+  if (LAN.applied) return 'Уже соединяемся…';
+  const pc = LAN.pc; LAN.applied = true; $('coQR').classList.add('hidden');
+  lanStep('Соединяемся по Wi‑Fi…'); coStat('');
+  pc.setRemoteDescription({ type: 'answer', sdp: lanSdp(d, LAN.mid) }).then(() => {
+    lanCamOff(); clearTimeout(LAN.tmo); LAN.tmo = setTimeout(() => { if (LAN.pc === pc) lanFail(); }, 20000);
+  }).catch((e) => { lanCamOff(); if (LAN.pc !== pc) return; LAN.applied = false; coStat('Код не подошёл (' + (e && e.message) + '). Нажмите «Новый код» и повторите.', 'err'); lanBtns([['🔄 Новый код', lanHostStart]]); });
+  return true;
+}
+// ---------------- guest ----------------
+function lanGuestStart() {
+  if (!COOP.on) { coopLeave(true); COOP.role = 'guest'; COOP.code = ''; }
+  lanCleanup(); COOP.lan = true; lanView('guest'); coStat(''); LAN.code = ''; lanShowCode();
+  if (!window.RTCPeerConnection) { coStat('Этот браузер не поддерживает прямое соединение (WebRTC). Обновите Chrome / Safari.', 'err'); return; }
+  lanStep('<b>1.</b> Подключитесь к Wi‑Fi друга (его точке доступа).<br><b>2.</b> Отсканируйте QR-код с его экрана.');
+  lanBtns([['📷 Сканировать QR друга', lanGuestScan]]);
+  lanLoadQR().catch(() => { });
+  lanGuestScan();
+}
+function lanGuestScan() { lanScanOpen('Наведите камеру на QR-код на экране друга', (t) => lanGuestApply(t)); }
+function lanGuestApply(txt) {
+  const d = lanDecode(txt);
+  if (!d) return 'Это не код этой игры.';
+  if (d.type === 'a') return 'Это ответный QR. Нужен QR с экрана того, кто создал игру.';
+  lanGuestAnswer(d); return true;
+}
+async function lanGuestAnswer(d) {
+  const my = ++LAN.gen; $('coQR').classList.add('hidden'); LAN.code = ''; lanShowCode();
+  lanStep('Готовим ответный QR…'); coStat('');
+  try { await lanLoadQR(); } catch (e) { lanCamOff(); if (my === LAN.gen) coStat('Не удалось загрузить модуль QR-кодов. Откройте игру один раз с интернетом — после этого она работает офлайн.', 'err'); return; }
+  if (my !== LAN.gen) return;
+  const conn = lanNewConn(); if (!conn) { lanCamOff(); coStat('Не удалось создать соединение (WebRTC).', 'err'); return; }
+  const pc = conn.pc;
+  pc.ondatachannel = (e) => conn.attach(e.channel);
+  try { await pc.setRemoteDescription({ type: 'offer', sdp: lanSdp(d, d.extra || '0') }); await pc.setLocalDescription(await pc.createAnswer()); }
+  catch (e) { lanCamOff(); if (my === LAN.gen) { coStat('Код не подошёл (' + (e && e.message) + '). Отсканируйте QR заново.', 'err'); lanBtns([['📷 Сканировать QR друга', lanGuestScan]]); } return; }
+  await lanGather(pc, 4000); lanCamOff(); // the camera was still on while gathering — that is what exposes the real LAN address
+  if (my !== LAN.gen || LAN.pc !== pc || conn.open) return;
+  const a = lanParseSdp(pc.localDescription.sdp), cs = lanPickCands(a.cands);
+  LAN.code = lanEncode('a', a, d.u); lanShowCode(); lanDrawQR(LAN.code);
+  lanStep('<b>3.</b> Покажите этот QR другу — пусть нажмёт «Сканировать ответ друга».' + lanNetNote(cs));
+  lanBtns([['📷 Сканировать заново', lanGuestScan]]);
+  if (!cs.length) coStat('Телефон не подключён к Wi‑Fi. Подключитесь к точке доступа друга и отсканируйте QR заново.', 'err');
+  clearTimeout(LAN.waitT); LAN.waitT = setTimeout(() => { if (LAN.pc === pc && !conn.open) coStat('Всё ещё не соединились. Друг отсканировал ваш QR? Проверьте, что оба в одной Wi‑Fi сети, и выключите VPN.', 'err'); }, 30000);
+}
+// text exchange (no camera / APK / desktop)
+function lanApplyText() {
+  const v = $('coLanIn').value; if (!v.trim()) { coStat('Вставьте код друга в поле.', 'err'); return; }
+  const r = COOP.role === 'host' ? lanHostApply(v) : lanGuestApply(v);
+  if (r === true) { $('coLanIn').value = ''; coStat(''); } else coStat(r, 'err');
+}
+function lanSendCode() {
+  const c = LAN.code; if (!c) return;
+  const txt = 'Код для игры BACKROOMS (кооператив «Рядом»): ' + c, done = () => toast('Код скопирован — отправьте его другу.');
+  if (navigator.share && TOUCH.on) { navigator.share({ text: txt }).catch(() => { }); return; }
+  try { navigator.clipboard.writeText(c).then(done, () => { $('coLanIn').value = c; toast('Скопируйте код из поля вручную.'); }); } catch (e) { $('coLanIn').value = c; toast('Скопируйте код из поля вручную.'); }
+}
+// ---------------- in-game re-invite (LAN has no server to rejoin through) ----------------
+function lanReinvite() {
+  if (!COOP.on || !COOP.lan || COOP.linked) return;
+  $('pause').classList.add('hidden'); $('sub').classList.add('hidden'); $('coop').classList.remove('hidden');
+  if (COOP.role === 'host') lanHostStart(); else lanGuestStart();
+}
+// ---------------- wiring into the existing co-op code ----------------
+{
+  const _leave = coopLeave; coopLeave = function (silent) { lanCleanup(); return _leave(silent); };
+  const _end = coopEndSession; coopEndSession = function () { lanCleanup(); const r = _end(); COOP.lan = false; lanPauseBtn(); return r; };
+  const _host = coopHost; coopHost = function () { lanCleanup(); COOP.lan = false; return _host(); };
+  const _join = coopJoin; coopJoin = function () { lanCleanup(); COOP.lan = false; return _join(); };
+  const _main = coopShowLobbyMain; coopShowLobbyMain = function () { _main(); $('coLan').classList.add('hidden'); lanMode(LAN.mode); };
+  const _open = coopOpenLobby;
+  coopOpenLobby = function () { if (COOP.conn || COOP.lan) { coopLeave(true); COOP.lan = false; COOP.role = null; } _open(); lanMode(LAN.mode); };
+  const _gone = coopPartnerGone;
+  coopPartnerGone = function (why) {
+    const lan = COOP.lan, on = COOP.on, role = COOP.role; _gone(why);
+    if (!lan) return;
+    if (on) { lanPauseBtn(); return; }
+    if (role === 'host') { // back in the lobby: offer a fresh QR
+      $('coRoom').classList.add('hidden'); lanView('host'); lanStep('Напарник отключился.');
+      coStat('Связь потеряна' + (why === 'bye' ? ' (напарник вышел)' : '') + '. Создайте новый QR-код, чтобы соединиться снова.', 'err');
+      lanBtns([['🔄 Новый код', lanHostStart]]);
+    } else { $('coLan').classList.add('hidden'); coopShowLobbyMain(); }
+  };
+  const _pause = pause; pause = function () { const r = _pause.apply(this, arguments); lanPauseBtn(); return r; };
+  const _ab = window.androidBack;
+  window.androidBack = function () { try { if (LAN.scan) { lanScanClose(); return 'ok'; } } catch (e) { } return _ab ? _ab() : ''; };
+  try { const m = localStorage.getItem('backrooms_comode'); if (m) LAN.mode = m === 'net' ? 'net' : 'lan'; } catch (e) { }
+  $('coModeLan').onclick = () => { AU.click(); lanMode('lan'); coStat(''); };
+  $('coModeNet').onclick = () => { AU.click(); lanMode('net'); coStat(''); };
+  $('coLanHost').onclick = () => { AU.click(); lanHostStart(); };
+  $('coLanJoin').onclick = () => { AU.click(); lanGuestStart(); };
+  $('coLanApply').onclick = () => { AU.click(); lanApplyText(); };
+  $('coLanCopy').onclick = () => { AU.click(); lanSendCode(); };
+  $('coScanX').onclick = () => { AU.click(); lanScanClose(); };
+  $('coLanIn').addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); lanApplyText(); } });
+  $('bCoInvite').onclick = () => { AU.click(); lanReinvite(); };
+  // «Назад»: from a sub-screen back to the co-op main screen; while re-inviting in-game — back to the pause menu
+  $('coBack').onclick = () => {
+    AU.click(); lanScanClose();
+    if (COOP.on) { lanCleanup(); $('coop').classList.add('hidden'); $('pause').classList.remove('hidden'); lanPauseBtn(); return; }
+    const sub = !$('coLan').classList.contains('hidden') || !$('coRoom').classList.contains('hidden');
+    coopLeave(true); COOP.role = null; COOP.lan = false; coStat('');
+    if (sub) { coopShowLobbyMain(); return; }
+    $('coop').classList.add('hidden'); $('menu').classList.remove('hidden');
+  };
+  lanMode(LAN.mode);
+}
+setInterval(() => { if (COOP.on) lanPauseBtn(); }, 1000);
+window.__lan = { LAN, lanEncode, lanDecode, lanParseSdp, lanSdp, lanPickCands, lanHostApply, lanGuestApply };
 </script>
 <script>
 // ====================== MONSTER OVERHAUL: scarier models, unique abilities, spatial voices, proximity FX ======================

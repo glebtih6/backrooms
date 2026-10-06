@@ -4725,7 +4725,7 @@ async function lanScanOpen(hint, onCode) {
     if (LAN.scan !== S) return;
     if (txt) {
       const r = onCode(txt);
-      if (r === true) { if (navigator.vibrate) try { navigator.vibrate(60); } catch (e) { } lanScanClose(true); return; }
+      if (r === true) { if (window.buzz) buzz(60, true); lanScanClose(true); return; }
       if (typeof r === 'string') { tx.textContent = r; clearTimeout(S.ht); S.ht = setTimeout(() => { if (LAN.scan === S) tx.textContent = hint; }, 2600); }
     }
     S.t = setTimeout(tick, txt ? 700 : 110);
@@ -4756,7 +4756,7 @@ function lanOpened(conn) {
   if (COOP.conn !== conn) return;
   if (LAN.conn === conn) { LAN.conn = null; LAN.pc = null; } clearTimeout(LAN.tmo); clearTimeout(LAN.waitT);
   lanScanClose(); $('coQR').classList.add('hidden'); LAN.code = '';
-  if (navigator.vibrate) try { navigator.vibrate([40, 60, 40]); } catch (e) { }
+  if (window.buzz) buzz([40, 60, 40], true);
   if (COOP.on) { $('coop').classList.add('hidden'); coopResume(true); lanPauseBtn(); return; } // re-joined during a running game
   $('coLan').classList.add('hidden');
   if (COOP.role === 'host') {
@@ -5918,5 +5918,75 @@ function cuteUI() {
   refreshMenu();
 }
 </script><!--/CUTE-->
+<script>
+// ====================== PHONE POLISH: screen stays on, haptics, co-op link quality ======================
+'use strict';
+(function () {
+  const S = SAVE.settings; if (S.vibro == null) S.vibro = true; if (S.awake == null) S.awake = true;
+  // ---- haptics (Android; iOS Safari has no Vibration API — silently ignored) ----
+  let lastBuzz = 0;
+  function buzz(p, force) {
+    if (!SAVE.settings.vibro || !TOUCH.on || !navigator.vibrate) return;
+    const now = performance.now(); if (!force && now - lastBuzz < 150) return; lastBuzz = now;
+    try { navigator.vibrate(p); } catch (e) { }
+  }
+  window.buzz = buzz;
+  const _hurt = hurtPlayer;
+  hurtPlayer = function (a) { const h = P.health; const r = _hurt.apply(this, arguments); const d = h - P.health; if (d > 0.5) buzz(Math.round(Math.min(140, 30 + d * 4))); return r; };
+  const _kill = killPlayer;
+  killPlayer = function () { const st = G.state, dn = P.down; const r = _kill.apply(this, arguments); if ((st === 'play' && G.state === 'jumpscare') || (!dn && P.down)) buzz([200, 70, 300, 70, 450], true); return r; };
+  if (typeof coopOnPing === 'function') { const _png = coopOnPing; coopOnPing = function (d) { buzz([60, 90, 60], true); return _png(d); }; }
+  if (typeof coopRevived === 'function') { const _rv = coopRevived; coopRevived = function () { buzz(90, true); return _rv.apply(this, arguments); }; }
+  let rWasDown = false;
+  setInterval(() => { // partner got caught -> short triple buzz
+    const dn = !!(COOP.on && COOP.linked && COOP.R.ready && COOP.R.down);
+    if (dn && !rWasDown && G.state === 'play') buzz([90, 80, 90, 80, 90], true);
+    rWasDown = dn;
+  }, 250);
+  // ---- Screen Wake Lock: the phone must not go dark while you hide in a locker (a sleeping host freezes the co-op world) ----
+  const WL = { s: null, busy: false, failT: 0 };
+  async function wlTick() {
+    if (!('wakeLock' in navigator) || WL.busy) return;
+    const want = SAVE.settings.awake && !document.hidden && (G.state !== 'menu' || !$('coop').classList.contains('hidden'));
+    if (want && !WL.s && performance.now() > WL.failT) {
+      WL.busy = true;
+      try { const s = await navigator.wakeLock.request('screen'); WL.s = s; s.addEventListener('release', () => { if (WL.s === s) WL.s = null; }); }
+      catch (e) { WL.s = null; WL.failT = performance.now() + 30000; }
+      WL.busy = false;
+    } else if (!want && WL.s) { const s = WL.s; WL.s = null; try { await s.release(); } catch (e) { } }
+  }
+  setInterval(wlTick, 2000); document.addEventListener('visibilitychange', () => setTimeout(wlTick, 300));
+  window.__wl = WL;
+  // ---- co-op: round-trip time shown in the HUD (old versions simply ignore these messages) ----
+  setInterval(() => { if (COOP.linked && COOP.conn && COOP.conn.open) coopSend({ t: 'rtt', ts: Math.round(coopNow()) }); }, 2000);
+  const _om = coopOnMsg;
+  coopOnMsg = function (d) {
+    if (d && d.t === 'rtt') { coopSend({ t: 'rtr', ts: d.ts }); return; }
+    if (d && d.t === 'rtr') { const r = coopNow() - d.ts; if (r >= 0 && r < 30000) { COOP.rtt = COOP.rtt ? COOP.rtt * 0.7 + r * 0.3 : r; COOP.rttAt = coopNow(); } return; }
+    return _om.apply(this, arguments);
+  };
+  const _pg = coopPartnerGone; coopPartnerGone = function () { COOP.rtt = 0; return _pg.apply(this, arguments); };
+  const _ht = coopHudTick;
+  coopHudTick = function () {
+    _ht.apply(this, arguments);
+    if (!COOP.linked || !COOP.rtt || coopNow() - (COOP.rttAt || 0) > 8000) return;
+    const r = Math.round(COOP.rtt), c = r < 90 ? '#7f7' : r < 220 ? '#ffd85a' : '#ff6a5a';
+    $('coopHud').insertAdjacentHTML('beforeend', ' · <span style="color:' + c + '">связь ' + r + ' мс</span>');
+  };
+  // ---- settings: two new toggles ----
+  const _os = openSub;
+  openSub = function (html) {
+    const isSet = typeof html === 'string' && html.startsWith('<h2>НАСТРОЙКИ</h2>');
+    if (isSet) html = html.replace('<p style="color:#887">Если игра тормозит', '<label class="set">Вибрация (телефон): <select id="sVib"><option value="1">Вкл</option><option value="0">Выкл</option></select></label><label class="set">Не гасить экран во время игры: <select id="sAwake"><option value="1">Да</option><option value="0">Нет</option></select></label><p style="color:#887">Если игра тормозит');
+    const r = _os(html);
+    if (isSet && $('sVib')) {
+      $('sVib').value = SAVE.settings.vibro ? '1' : '0'; $('sAwake').value = SAVE.settings.awake ? '1' : '0';
+      $('sVib').onchange = (e) => { SAVE.settings.vibro = e.target.value === '1'; saveGame(); buzz(60, true); };
+      $('sAwake').onchange = (e) => { SAVE.settings.awake = e.target.value === '1'; saveGame(); wlTick(); };
+    }
+    return r;
+  };
+})();
+</script>
 </body>
 </html>
